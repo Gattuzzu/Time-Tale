@@ -11,7 +11,7 @@ const long updateInterval = 60000; // 1 Minute
 
 void setup() {
   // Logger Initialisieren
-  Logger::setup();
+  Logger::setup(LogLevel::Info);
   Logger::log(LogLevel::Info, "Programm gestartet!");
 
   // NTPTimeSync Initialiseren
