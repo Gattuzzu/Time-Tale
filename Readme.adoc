@@ -1,1 +1,12 @@
 # Time-Tale
+
+
+## Secrets
+
+Um das Programm starten zu können, muss unter dem Pfad: "./src" die Datei "Secrets.h" erstellt werden.
+Diese Muss folgende defines haben:
+[source, header]
+----
+#define SECRET_SSID     "w-lan Name"
+#define SECRET_PASSWORD "password"
+----
