@@ -1,5 +1,5 @@
 #include "NTPTimeSync.h" // Inkludiere die eigene Header-Datei
-#include "../logger/Logger.h" // <-- HIER MUSS Logger.h VOLLSTÄNDIG INKLUDIERT WERDEN,
+#include "../../logger/Logger.h" // <-- HIER MUSS Logger.h VOLLSTÄNDIG INKLUDIERT WERDEN,
                               // da Logger::log tatsächlich aufgerufen wird und der Compiler
                               // die vollständige Definition von Logger benötigt.
 

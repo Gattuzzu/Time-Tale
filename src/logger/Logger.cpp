@@ -1,5 +1,5 @@
 #include "Logger.h" // Eigenen Header inkludieren
-#include "../webservice/NTPTimeSync.h" // Hier ist die vollständige Definition von NTPTimeSync notwendig,
+#include "../webservice/ntp/NTPTimeSync.h" // Hier ist die vollständige Definition von NTPTimeSync notwendig,
                                       // da NTPTimeSync* _staticTimeSync tatsächlich verwendet wird (Methodenaufruf).
 
 // --- DEFINITION UND INITIALISIERUNG DER STATISCHEN MEMBER-VARIABLEN ---

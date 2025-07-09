@@ -5,7 +5,7 @@
 #include <WiFiS3.h>
 #include <WiFiUdp.h>
 #include <NTPClient.h>
-#include "../logger/LogLevel.h" // LogLevel.h muss hier bleiben, da es im Public-Interface verwendet wird
+#include "../../logger/LogLevel.h" // LogLevel.h muss hier bleiben, da es im Public-Interface verwendet wird
 
 // --- FORWARD DECLARATION für die Logger-Klasse ---
 // Da NTPTimeSync in seiner Deklaration nur Logger::log aufruft (statische Methode),
