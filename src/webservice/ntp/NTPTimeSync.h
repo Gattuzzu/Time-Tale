@@ -2,7 +2,7 @@
 #define NTP_TIME_SYNC_H
 
 #include <Arduino.h>
-#include <WiFiS3.h>
+#include <WiFi.h>
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 #include "../../logger/LogLevel.h" // LogLevel.h muss hier bleiben, da es im Public-Interface verwendet wird

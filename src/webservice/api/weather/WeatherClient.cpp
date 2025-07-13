@@ -10,18 +10,16 @@ WeatherClient::WeatherClient(const char* host, const char* apiKey)
         Logger::log(LogLevel::Error, "WeatherClient: Host oder API Key sind im Konstruktor NULL. Sicherstellen, dass getInstance() einmal mit allen Parametern aufgerufen wird.");
     }
 
-    // ACHTUNG: WiFiSSLClient hat möglicherweise KEINE setInsecure() Methode.
-    // Dies hängt von der genauen Implementierung der WiFiS3/WiFiSSLClient Bibliothek ab.
-    // Wenn setInsecure() nicht existiert, müssen Sie Root-CA-Zertifikate verwenden
-    // oder eine andere Methode finden, um die Zertifikatsprüfung zu umgehen (nicht empfohlen).
+    // Für WiFiClientSecure auf dem ESP32:
+    // setInsecure() kann für Testzwecke verwendet werden, um die Zertifikatsprüfung zu umgehen.
+    // In einer Produktionsumgebung wird DRINGEND empfohlen, Root-CA-Zertifikate zu verwenden.
+    // Die ESP32 Arduino Core's WiFiClientSecure unterstützt setCACert().
+    // Wenn Sie unsicher sind, ob setInsecure() funktioniert, können Sie es auskommentieren
+    // und sich ausschließlich auf das Zertifikat verlassen.
+    // _client.setInsecure(); // Kann aktiviert werden, um die Zertifikatsprüfung zu deaktivieren (NICHT FÜR PRODUKTION!)
 
-    // _client.setInsecure(); // <-- DIESE ZEILE MUSS EVENTUELL ENTFERNT/ANGEPASST WERDEN,
-                              // falls WiFiSSLClient diese Methode nicht anbietet.
-                              // Wenn Sie HTTPS ohne Zertifikatsprüfung testen wollen,
-                              // müssen Sie prüfen, ob die WiFiSSLClient-Lib eine Alternative hat.
-                              // Oft ist es aber einfacher, das Root-CA-Zertifikat einzubetten.
-
-    // Beispiel für das Einbetten eines Root-CA-Zertifikats (wenn WiFiSSLClient dies unterstützt):
+    // Beispiel für das Einbetten eines Root-CA-Zertifikats
+    // Dies ist der empfohlene Weg für sichere HTTPS-Verbindungen.
     const char* google_root_ca = "-----BEGIN CERTIFICATE-----\n" \
                                  "MIIFVzCCAz+gAwIBAgINAgPlk28xsBNJiGuiFzANBgkqhkiG9w0BAQwFADBHMQsw\n" \
                                  "CQYDVQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZpY2VzIExMQzEU\n" \
@@ -112,22 +110,24 @@ bool WeatherClient::getCurrentConditions(float latitude, float longitude, Weathe
     Logger::log(LogLevel::Debug, "WeatherClient: Status Line: " + statusLine);
     if (statusLine.indexOf("200 OK") == -1) {
         Logger::log(LogLevel::Error, "WeatherClient: API-Fehler (kein 200 OK). Status: " + statusLine);
+        // Versuchen, den restlichen Header zu verwerfen, falls noch Daten im Puffer sind
+        while (_client.available() && _client.readStringUntil('\n').length() != 0);
         _client.stop();
-        // Hier könntest du versuchen, den Fehlerbody zu lesen, wenn vorhanden
         return false;
     }
 
     // Alle weiteren Header bis zur leeren Zeile verwerfen
-    while (_client.available() && _client.readStringUntil('\n').length() != 0);
+    // Achtung: Nach dem Lesen der Statuszeile können noch andere Header folgen.
+    // Die Schleife muss wirklich bis zur leeren Zeile lesen.
+    while (_client.available()) {
+        String line = _client.readStringUntil('\n');
+        if (line.length() == 0 || line == "\r") { // Berücksichtige CRLF
+            break;
+        }
+    }
 
     // JSON-Antwort parsen
-    // Bestimme die Kapazität des JSON-Dokuments dynamisch oder statisch.
-    // Ein großer JSON-String kann viel RAM benötigen.
-    // Die Dokumentation von ArduinoJson empfiehlt das ArduinoJson Assistant Tool
-    // (https://arduinojson.org/v6/assistant/) um die richtige Größe zu bestimmen.
-    // Ich schätze hier konservativ für dein Beispiel-JSON.
-    const size_t capacity = 2048; // Schätzung, anpassen nach tatsächlicher Antwortgröße
-    StaticJsonDocument<capacity> doc; // Oder DynamicJsonDocument doc;
+    JsonDocument doc;
 
     DeserializationError error = deserializeJson(doc, _client);
 
@@ -135,6 +135,7 @@ bool WeatherClient::getCurrentConditions(float latitude, float longitude, Weathe
 
     if (error) {
         Logger::log(LogLevel::Error, "WeatherClient: JSON-Parsing fehlgeschlagen: " + String(error.c_str()));
+        Logger::log(LogLevel::Error, error.c_str());
         return false;
     }
 
@@ -184,7 +185,9 @@ bool WeatherClient::parseJson(JsonDocument& doc, WeatherData& outWeatherData) {
 
     // Current Conditions History (nur wenn im JSON vorhanden)
     // Überprüfe, ob das Objekt existiert, bevor du darauf zugreifst
-    if (doc.containsKey("currentConditionsHistory")) {
+    // Die containsKey-Methode ist in neueren ArduinoJson-Versionen als veraltet markiert.
+    // Stattdessen wird empfohlen, zu prüfen, ob der Zugriff auf das Element null ergibt.
+    if (!doc["currentConditionsHistory"].isNull()) {
         outWeatherData.currentConditionsHistory.temperatureChange.degrees = doc["currentConditionsHistory"]["temperatureChange"]["degrees"] | 0.0f;
         outWeatherData.currentConditionsHistory.temperatureChange.unit = doc["currentConditionsHistory"]["temperatureChange"]["unit"].as<String>();
         outWeatherData.currentConditionsHistory.maxTemperature.degrees = doc["currentConditionsHistory"]["maxTemperature"]["degrees"] | 0.0f;

@@ -2,9 +2,8 @@
 #define WEATHER_CLIENT_H
 
 #include <Arduino.h>
-#include <WiFiS3.h>
-#include <WiFiSSLClient.h>
-// #include <WiFiClientSecure.h>
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
 #include "../../../logger/Logger.h"
 #include "../../../logger/LogLevel.h"
@@ -38,7 +37,7 @@ private:
 
     const char* _host;
     const char* _apiKey; // Dein Google Cloud API Access Token
-    WiFiSSLClient _client; // Für HTTPS-Verbindungen
+    WiFiClientSecure _client; // Für HTTPS-Verbindungen
 
     // Hilfsfunktion zum Parsen des JSON und Befüllen des WeatherData-Objekts
     bool parseJson(JsonDocument& doc, WeatherData& outWeatherData);
