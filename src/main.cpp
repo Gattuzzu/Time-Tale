@@ -6,9 +6,11 @@
 #include "webservice/api/weather/WeatherData.h"
 #include "Secrets.h"
 #include "Settings.h"
+#include "webservice/api/pollen/PollenClient.h"
 
 // Lokale Speicher
 WeatherData currentWeatherData;
+PollenData currentPollenData;
 
 void setup() {
   // Logger initialisieren
@@ -29,6 +31,9 @@ void setup() {
   // Weather API initialisieren
   WeatherClient::getInstance(WEATHER_API_SERVER, GOOGLE_ACCESS_TOKEN);
 
+  // Pollen API initialisieren
+  PollenClient::getInstance(POLLEN_API_SERVER, GOOGLE_ACCESS_TOKEN);
+
 }
 
 void loop() {
@@ -40,5 +45,13 @@ void loop() {
     // currentWeatherData.printToSerial();
   } else {
     Logger::log(LogLevel::Error, "Fehler beim Abrufen der Wetterdaten.");
+  }
+
+  // Pollen Daten abfragen
+  if (PollenClient::getInstance().getCurrentPollen(LATITUDE, LONGITUDE, currentPollenData)) {
+    Logger::log(LogLevel::Info, "Wetterdaten erfolgreich abgerufen.");
+    // currentWeatherData.printToSerial();
+  } else {
+    Logger::log(LogLevel::Error, "Fehler beim Abrufen der Pollendaten.");
   }
 }

@@ -8,5 +8,6 @@
 
 // API Konfiguration
 #define WEATHER_API_SERVER "weather.googleapis.com"
+#define POLLEN_API_SERVER "pollen.googleapis.com"
 #define LATITUDE 46.774
 #define LONGITUDE 7.640
