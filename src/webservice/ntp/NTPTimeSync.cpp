@@ -1,61 +1,63 @@
-#include "NTPTimeSync.h" // Inkludiere die eigene Header-Datei
-#include "../../logger/Logger.h" // <-- HIER MUSS Logger.h VOLLSTÄNDIG INKLUDIERT WERDEN,
-                              // da Logger::log tatsächlich aufgerufen wird und der Compiler
-                              // die vollständige Definition von Logger benötigt.
+#include "NTPTimeSync.h"
+#include "../../logger/Logger.h"
 
 // Implementierung der begin() Methode
+// Diese Methode nimmt KEINE WiFiUDP Instanz mehr entgegen.
 bool NTPTimeSync::begin() {
-  // Überprüfen, ob die Konfigurationsdaten gesetzt sind
-  if (_ssid == nullptr || _password == nullptr || _ntpServer == nullptr || _updateInterval == 0) {
-      Logger::log(LogLevel::Error, "NTPTimeSync::begin() aufgerufen ohne vollständige Konfiguration. Bitte getInstance mit allen Parametern aufrufen.");
+  // Überprüfen, ob WLAN bereits verbunden ist
+  if (WiFi.status() != WL_CONNECTED) {
+      Logger::log(LogLevel::Error, "NTPTimeSync::begin(): WLAN ist nicht verbunden. Bitte stellen Sie zuerst eine WLAN-Verbindung her.");
       return false;
   }
 
-  Logger::log(LogLevel::Info, "Verbinde mit WLAN...");
-  WiFi.begin(_ssid, _password);
-  int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-    delay(500);
-    Logger::log(LogLevel::Info, ".");
-    attempts++;
-  }
+  // Der NTPClient kümmert sich um das `begin()` des zugrunde liegenden UDP-Sockets.
+  _NtpClient.begin(); // Dies sollte den UDP-Port für NTP starten
 
-  if (WiFi.status() == WL_CONNECTED) {
-    Logger::log(LogLevel::Info, "Verbunden mit WLAN!");
-    Logger::log(LogLevel::Info, "IP-Adresse: " + WiFi.localIP().toString());
-
-    _timeClient.begin();
-    Logger::log(LogLevel::Info, "Synchronisiere Zeit mit NTP...");
-    while(!_timeClient.update()) {
+  Logger::log(LogLevel::Info, "Synchronisiere Zeit mit NTP...");
+  // Erster Update-Versuch beim Start
+  bool updateSuccess = _NtpClient.update();
+  if (!updateSuccess) {
+    int attempts = 0;
+    while(!updateSuccess && attempts < 10) { // Max. 10 Versuche
       delay(500);
       Logger::log(LogLevel::Info, ".");
+      updateSuccess = _NtpClient.update();
+      attempts++;
     }
+  }
+
+  if (updateSuccess) {
     Logger::log(LogLevel::Info, "Zeit synchronisiert.");
     return true;
   } else {
-    Logger::log(LogLevel::Error, "Verbindung fehlgeschlagen! Bitte WLAN-Daten prüfen.");
+    Logger::log(LogLevel::Error, "NTPTimeSync: Zeit konnte nicht synchronisiert werden. NTP-Server oder Netzwerkproblem.");
     return false;
   }
 }
 
-// Implementierung der update() Methode
+// Implementierung der update() Methode (unverändert)
 void NTPTimeSync::update() {
-  _timeClient.update();
+  if (WiFi.status() == WL_CONNECTED) {
+    _NtpClient.update();
+  } else {
+    Logger::log(LogLevel::Error, "NTPTimeSync: WLAN nicht verbunden, Zeit-Update übersprungen.");
+  }
 }
 
-// Implementierung der getFormattedTime() Methode
+// Implementierung der getFormattedTime() Methode (unverändert)
 String NTPTimeSync::getFormattedTime() {
-  return _timeClient.getFormattedTime();
+  return _NtpClient.getFormattedTime();
 }
 
-// Implementierung der getEpochTime() Methode
+// Implementierung der getEpochTime() Methode (unverändert)
 time_t NTPTimeSync::getEpochTime() {
-  return _timeClient.getEpochTime();
+  return _NtpClient.getEpochTime();
 }
 
 // Implementierung des privaten Konstruktors
-NTPTimeSync::NTPTimeSync(const char* ssid, const char* password, const char* ntpServer, long timeOffset, long updateInterval)
-  : _ssid(ssid), _password(password), _ntpServer(ntpServer), _timeOffset(timeOffset), _updateInterval(updateInterval),
-    _timeClient(_ntpUDP, ntpServer, timeOffset, updateInterval) {
-  // Der Konstruktor kann leer bleiben, da alle Member in der Initialisierungsliste gesetzt werden.
+NTPTimeSync::NTPTimeSync(const char* ntpServer, long timeOffset, long updateInterval)
+  // Hier wird _NtpClient DIREKT mit der privaten _internalNtpUDP initialisiert.
+  : _ntpServer(ntpServer), _timeOffset(timeOffset), _updateInterval(updateInterval),
+    _NtpClient(_internalNtpUDP, ntpServer, timeOffset, updateInterval) {
+  // Der Konstruktor kann leer bleiben.
 }

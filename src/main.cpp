@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <WiFi.h>
 #include "logger/Logger.h"
 #include "logger/LogLevel.h"
 #include "webservice/ntp/NTPTimeSync.h"
@@ -17,8 +18,26 @@ void setup() {
   Logger::setup(LOG_LEVEL);
   Logger::log(LogLevel::Info, "Programm gestartet!");
 
+  // W-Lan Verbindung versuchen aufzubauen
+  WiFi.mode(WIFI_AP_STA); // (Access Point + Station / Teilnehmer) 
+  WiFi.begin(SECRET_SSID, SECRET_PASSWORD);
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    delay(500);
+    Logger::log(LogLevel::Info, ".");
+    attempts++;
+  }
+  if (WiFi.status() == WL_CONNECTED){
+    Logger::log(LogLevel::Info, "Verbunden mit WLAN!");
+    Logger::log(LogLevel::Info, "IP-Adresse: " + WiFi.localIP().toString());
+
+  } else {
+    Logger::log(LogLevel::Error, "Verbindung fehlgeschlagen! Bitte WLAN-Daten prüfen.");
+    return;
+  }
+
   // NTPTimeSync initialiseren
-  if (NTPTimeSync::getInstance(SECRET_SSID, SECRET_PASSWORD, NTP_SERVER, TIME_OFFSET, UPDATE_INTERVALL).begin()) {
+  if (NTPTimeSync::getInstance(NTP_SERVER, TIME_OFFSET, UPDATE_INTERVALL).begin()) {
     // Zeit an Logger weiter geben
     Logger::setup(LOG_LEVEL, &NTPTimeSync::getInstance());
 
