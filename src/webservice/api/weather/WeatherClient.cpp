@@ -144,60 +144,23 @@ bool WeatherClient::getCurrentConditions(float latitude, float longitude, Weathe
 
 // Hilfsfunktion zum Parsen des JSON und Befüllen des WeatherData-Objekts
 bool WeatherClient::parseJson(JsonDocument& doc, WeatherData& outWeatherData) {
-    // Einfache Werte
-    outWeatherData.relativeHumidity = doc["relativeHumidity"] | 0; // Standardwert 0
-    outWeatherData.uvIndex = doc["uvIndex"] | 0;
-    outWeatherData.thunderstormProbability = doc["thunderstormProbability"] | 0;
-    outWeatherData.cloudCover = doc["cloudCover"] | 0;
+    // 1. Temperatur (aus "temperature" Objekt)
+    outWeatherData.temperature.degrees = doc["temperature"]["degrees"] | 0.0f;
+    outWeatherData.temperature.unit = doc["temperature"]["unit"].as<String>();
 
-    // Geschachtelte Objekte (degrees & unit)
-    outWeatherData.dewPoint.degrees = doc["dewPoint"]["degrees"] | 0.0f;
-    outWeatherData.dewPoint.unit = doc["dewPoint"]["unit"].as<String>();
+    // 2. Luftfeuchtigkeit (aus "relativeHumidity")
+    outWeatherData.relativeHumidity = doc["relativeHumidity"] | 0.0f;
 
-    outWeatherData.heatIndex.degrees = doc["heatIndex"]["degrees"] | 0.0f;
-    outWeatherData.heatIndex.unit = doc["heatIndex"]["unit"].as<String>();
+    // 3. Wetterart als Enum (aus "weatherCondition.description.text")
+    // Überprüfen, ob das weatherCondition-Objekt und das description-Objekt existieren
+    if (!doc["weatherCondition"].isNull() && !doc["weatherCondition"]["description"].isNull()) {
+        String typeString = doc["weatherCondition"]["description"]["text"].as<String>();
 
-    outWeatherData.windChill.degrees = doc["windChill"]["degrees"] | 0.0f;
-    outWeatherData.windChill.unit = doc["windChill"]["unit"].as<String>();
+        // Map the string to the enum value
+        outWeatherData.weatherType = WeatherData::weatherConditionStringToType(typeString);
 
-    // Air Pressure
-    outWeatherData.airPressure.meanSeaLevelMillibars = doc["airPressure"]["meanSeaLevelMillibars"] | 0.0f;
-
-    // Wind
-    outWeatherData.wind.direction.degrees = doc["wind"]["direction"]["degrees"] | 0;
-    outWeatherData.wind.direction.cardinal = doc["wind"]["direction"]["cardinal"].as<String>();
-    outWeatherData.wind.speed.value = doc["wind"]["speed"]["value"] | 0.0f;
-    outWeatherData.wind.speed.unit = doc["wind"]["speed"]["unit"].as<String>();
-    outWeatherData.wind.gust.value = doc["wind"]["gust"]["value"] | 0.0f;
-    outWeatherData.wind.gust.unit = doc["wind"]["gust"]["unit"].as<String>();
-
-    // Visibility
-    outWeatherData.visibility.distance = doc["visibility"]["distance"] | 0.0f;
-    outWeatherData.visibility.unit = doc["visibility"]["unit"].as<String>();
-
-    // Precipitation
-    outWeatherData.precipitation.probability.percent = doc["precipitation"]["probability"]["percent"] | 0;
-    outWeatherData.precipitation.probability.type = doc["precipitation"]["probability"]["type"].as<String>();
-    outWeatherData.precipitation.snowQpf.quantity = doc["precipitation"]["snowQpf"]["quantity"] | 0.0f;
-    outWeatherData.precipitation.snowQpf.unit = doc["precipitation"]["snowQpf"]["unit"].as<String>();
-    outWeatherData.precipitation.qpf.quantity = doc["precipitation"]["qpf"]["quantity"] | 0.0f;
-    outWeatherData.precipitation.qpf.unit = doc["precipitation"]["qpf"]["unit"].as<String>();
-
-    // Current Conditions History (nur wenn im JSON vorhanden)
-    // Überprüfe, ob das Objekt existiert, bevor du darauf zugreifst
-    // Die containsKey-Methode ist in neueren ArduinoJson-Versionen als veraltet markiert.
-    // Stattdessen wird empfohlen, zu prüfen, ob der Zugriff auf das Element null ergibt.
-    if (!doc["currentConditionsHistory"].isNull()) {
-        outWeatherData.currentConditionsHistory.temperatureChange.degrees = doc["currentConditionsHistory"]["temperatureChange"]["degrees"] | 0.0f;
-        outWeatherData.currentConditionsHistory.temperatureChange.unit = doc["currentConditionsHistory"]["temperatureChange"]["unit"].as<String>();
-        outWeatherData.currentConditionsHistory.maxTemperature.degrees = doc["currentConditionsHistory"]["maxTemperature"]["degrees"] | 0.0f;
-        outWeatherData.currentConditionsHistory.maxTemperature.unit = doc["currentConditionsHistory"]["maxTemperature"]["unit"].as<String>();
-        outWeatherData.currentConditionsHistory.minTemperature.degrees = doc["currentConditionsHistory"]["minTemperature"]["degrees"] | 0.0f;
-        outWeatherData.currentConditionsHistory.minTemperature.unit = doc["currentConditionsHistory"]["minTemperature"]["unit"].as<String>();
-        outWeatherData.currentConditionsHistory.snowQpf.quantity = doc["currentConditionsHistory"]["snowQpf"]["quantity"] | 0.0f;
-        outWeatherData.currentConditionsHistory.snowQpf.unit = doc["currentConditionsHistory"]["snowQpf"]["unit"].as<String>();
-        outWeatherData.currentConditionsHistory.qpf.quantity = doc["currentConditionsHistory"]["qpf"]["quantity"] | 0.0f;
-        outWeatherData.currentConditionsHistory.qpf.unit = doc["currentConditionsHistory"]["qpf"]["unit"].as<String>();
+    } else {
+        outWeatherData.weatherType = WeatherConditionType::UNKNOWN; // Fallback, falls das Feld fehlt
     }
 
     return true;
