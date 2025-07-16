@@ -6,8 +6,8 @@ public:
     // Konstruktor: Nimmt die PCF8574 Instanz und die Zuordnung der Segmente entgegen.
     // pinMap: Array [a,b,c,d,e,f,g]
     // dpPin: Der PCF8574 Pin, an den der Dezimalpunkt (DP) angeschlossen ist.
-    SevenSegmentDisplay(PCF8574& pcf, const int* pinMap, int dpPin) 
-      : _pcf(pcf), _pinMap(pinMap), _dpPin(dpPin) {
+    SevenSegmentDisplay(uint8_t pcfAddress, const int* pinMap, int dpPin) 
+      : _pcf(pcfAddress), _pinMap(pinMap), _dpPin(dpPin) {
         _pcf.begin();
         allSegmentsOff(); // Erstmal alle Segmente ausschalten.
     }
@@ -82,7 +82,7 @@ public:
     }
 
 private:
-    PCF8574& _pcf;          // Referenz auf die PCF8574 Instanz
+    PCF8574 _pcf;          // Referenz auf die PCF8574 Instanz
     const int* _pinMap;     // Zeiger auf das Pin-Mapping Array für Segmente a-g
     int _dpPin;             // Der PCF8574 Pin für den Dezimalpunkt
 };

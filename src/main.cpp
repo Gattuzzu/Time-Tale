@@ -24,6 +24,10 @@ PollenData currentPollenData;
 String savedWifiSsid = "";
 String savedWifiPassword = "";
 
+// Sieben Segment Anzeigen
+SevenSegmentDisplay* sevenSegmentDisplays[5]; 
+const uint8_t PCF_ADDRESSES[5] = {0x20, 0x21, 0x22, 0x23, 0x24};
+
 // Zustände des Geräts
 enum DeviceState {
     STATE_INITIALIZING,         // Beim Start: Lade Konfiguration und versuche WLAN-Verbindung
@@ -167,25 +171,13 @@ void setup() {
     Wire.setClock(400000L); // 400 kHz -> Wenn das nicht funktioniert, dann mit "100000L" (100 kHz) testen
 
     // 7-Segment Anzeige Initialisieren
-    PCF8574 pcf1(0x20);
-    PCF8574 pcf2(0x21);
-    PCF8574 pcf3(0x22);
-    PCF8574 pcf4(0x23);
-    PCF8574 pcf5(0x24);
     const int commonPinMap[7] = {0, 1, 2, 3, 4, 5, 6}; // Wie die Ausgänge belegt sind.
-    SevenSegmentDisplay display1(pcf1, commonPinMap, 7);
-    SevenSegmentDisplay display2(pcf2, commonPinMap, 7);
-    SevenSegmentDisplay display3(pcf3, commonPinMap, 7);
-    SevenSegmentDisplay display4(pcf4, commonPinMap, 7);
-    SevenSegmentDisplay display5(pcf5, commonPinMap, 7);
-
-    // Lampen Test
-    sevenSegmentTest(display1);
-    sevenSegmentTest(display2);
-    sevenSegmentTest(display3);
-    sevenSegmentTest(display4);
-    sevenSegmentTest(display5);
-
+    for(int i = 0; i < 5; i++){
+        // Sieben Segment Anzeigen erstellen
+        sevenSegmentDisplays[i] = new SevenSegmentDisplay(PCF_ADDRESSES[i], commonPinMap, 7);
+        // Test
+        sevenSegmentTest(*sevenSegmentDisplays[i]);
+    }
 
 }
 
