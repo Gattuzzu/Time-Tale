@@ -13,6 +13,8 @@
 // Geheimnisse (API-Schlüssel, Koordinaten) und Einstellungen (NTP, AP-Details)
 #include "Secrets.h" // Enthält GOOGLE_ACCESS_TOKEN, LATITUDE, LONGITUDE
 #include "Settings.h" // Enthält NTP_SERVER, TIME_OFFSET, UPDATE_INTERVALL, AP_SSID, AP_PASSWORD
+#include <PCF8574.h>
+#include "i2cbus/seven_segment/SevenSegmentDisplay.h"
 
 // Lokale Speicher für API-Daten
 WeatherData currentWeatherData;
@@ -136,6 +138,18 @@ void updatePollenApi(unsigned long &lastApiCall){
     }
 }
 
+void sevenSegmentTest(SevenSegmentDisplay display){
+    for(int i = 0; i <= 10; i++){
+        if(i == 10){
+            display.displayDigit(9, true);
+        } else{
+            display.displayDigit(i);
+        }
+        delay(100);
+    }
+    display.allSegmentsOff();
+}
+
 
 void setup() {
     Serial.begin(115200);
@@ -147,6 +161,32 @@ void setup() {
 
     // Lade initial die WLAN-Konfiguration aus NVS
     // Die Zustandsmaschine im loop() übernimmt den Rest.
+
+    // i2c Bus initialiseren
+    Wire.begin();
+    Wire.setClock(400000L); // 400 kHz -> Wenn das nicht funktioniert, dann mit "100000L" (100 kHz) testen
+
+    // 7-Segment Anzeige Initialisieren
+    PCF8574 pcf1(0x20);
+    PCF8574 pcf2(0x21);
+    PCF8574 pcf3(0x22);
+    PCF8574 pcf4(0x23);
+    PCF8574 pcf5(0x24);
+    const int commonPinMap[7] = {0, 1, 2, 3, 4, 5, 6}; // Wie die Ausgänge belegt sind.
+    SevenSegmentDisplay display1(pcf1, commonPinMap, 7);
+    SevenSegmentDisplay display2(pcf2, commonPinMap, 7);
+    SevenSegmentDisplay display3(pcf3, commonPinMap, 7);
+    SevenSegmentDisplay display4(pcf4, commonPinMap, 7);
+    SevenSegmentDisplay display5(pcf5, commonPinMap, 7);
+
+    // Lampen Test
+    sevenSegmentTest(display1);
+    sevenSegmentTest(display2);
+    sevenSegmentTest(display3);
+    sevenSegmentTest(display4);
+    sevenSegmentTest(display5);
+
+
 }
 
 void loop() {
