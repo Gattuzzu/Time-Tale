@@ -15,6 +15,7 @@
 #include "Settings.h" // Enthält NTP_SERVER, TIME_OFFSET, UPDATE_INTERVALL, AP_SSID, AP_PASSWORD
 #include <PCF8574.h>
 #include "i2cbus/seven_segment/SevenSegmentDisplay.h"
+#include "led/led_strip/LedStrip.h"
 
 // Lokale Speicher für API-Daten
 WeatherData currentWeatherData;
@@ -27,6 +28,9 @@ String savedWifiPassword = "";
 // Sieben Segment Anzeigen
 SevenSegmentDisplay* sevenSegmentDisplays[5]; 
 const uint8_t PCF_ADDRESSES[5] = {0x20, 0x21, 0x22, 0x23, 0x24};
+
+// LED-Streifen
+LedStrip myLedStrip(LED_PIN, NUM_LEDS);
 
 // Zustände des Geräts
 enum DeviceState {
@@ -154,6 +158,17 @@ void sevenSegmentTest(SevenSegmentDisplay display){
     display.allSegmentsOff();
 }
 
+void ledStripTest(){
+    myLedStrip.clearAll();
+    delay(1000);
+    for(int i = 0; i < NUM_LEDS; i++) {
+        // LED-Streifen testen
+        myLedStrip.setSingleLED(i, 0, 0, 255); // Blaue LED
+        delay(50);
+        myLedStrip.clearSingleLED(i); // LED wieder ausschalten
+    } 
+}
+
 
 void setup() {
     Serial.begin(115200);
@@ -179,6 +194,9 @@ void setup() {
         sevenSegmentTest(*sevenSegmentDisplays[i]);
     }
 
+    // LED-Streifen Testen
+    ledStripTest();
+      
 }
 
 void loop() {

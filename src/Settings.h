@@ -17,3 +17,8 @@
 #define POLLEN_API_SERVER "pollen.googleapis.com"
 #define LATITUDE 46.774
 #define LONGITUDE 7.640
+
+// LED Streifen Konfiguration
+#define LED_PIN        13 // Beispiel-Pin, passe dies an deinen ESP32 an
+#define NUM_LEDS      123 // Die Gesamtzahl deiner LEDs
+#define LED_BRIGHTNES 255 // Standard helligkeit der LEDs
