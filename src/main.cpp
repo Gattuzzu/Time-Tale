@@ -153,8 +153,9 @@ void sevenSegmentTest(SevenSegmentDisplay display){
         } else{
             display.displayDigit(i);
         }
-        delay(100);
+        delay(250);
     }
+    delay(250);
     display.allSegmentsOff();
 }
 
@@ -182,16 +183,17 @@ void setup() {
     // Die Zustandsmaschine im loop() übernimmt den Rest.
 
     // i2c Bus initialiseren
-    Wire.begin();
-    Wire.setClock(400000L); // 400 kHz -> Wenn das nicht funktioniert, dann mit "100000L" (100 kHz) testen
+    Serial.println("i2c Bus starten...");
+    Wire.begin(21, 22);
+    Wire.setClock(100000L); // 400 kHz -> Wenn das nicht funktioniert, dann mit "100000L" (100 kHz) testen
+    Serial.println("i2c Bus gestartet!");
 
     // 7-Segment Anzeige Initialisieren
-    const int commonPinMap[7] = {0, 1, 2, 3, 4, 5, 6}; // Wie die Ausgänge belegt sind.
     for(int i = 0; i < 5; i++){
-        // Sieben Segment Anzeigen erstellen
-        sevenSegmentDisplays[i] = new SevenSegmentDisplay(PCF_ADDRESSES[i], commonPinMap, 7);
-        // Test
-        sevenSegmentTest(*sevenSegmentDisplays[i]);
+      // Sieben Segment Anzeigen erstellen
+      sevenSegmentDisplays[i] = new SevenSegmentDisplay(PCF_ADDRESSES[i]);
+      // Test
+      sevenSegmentTest(*sevenSegmentDisplays[i]);
     }
 
     // LED-Streifen Testen

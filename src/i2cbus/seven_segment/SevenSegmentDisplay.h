@@ -1,15 +1,16 @@
 #include <Wire.h>
 #include <PCF8574.h>
+#include <logger/LogLevel.h>
 
 class SevenSegmentDisplay {
 public:
     // Konstruktor: Nimmt die PCF8574 Instanz und die Zuordnung der Segmente entgegen.
     // pinMap: Array [a,b,c,d,e,f,g]
     // dpPin: Der PCF8574 Pin, an den der Dezimalpunkt (DP) angeschlossen ist.
-    SevenSegmentDisplay(uint8_t pcfAddress, const int* pinMap, int dpPin) 
-      : _pcf(pcfAddress), _pinMap(pinMap), _dpPin(dpPin) {
+    SevenSegmentDisplay(uint8_t pcfAddress)
+      : _pcf(pcfAddress){
         _pcf.begin();
-        allSegmentsOff(); // Erstmal alle Segmente ausschalten.
+        allSegmentsOff(); // Erstmal alle Segmente ausschalten
     }
 
     // Methode zum Anzeigen einer Ziffer (0-9) und Steuern des Dezimalpunkts
@@ -22,67 +23,33 @@ public:
             return;
         }
 
-        // Segmentmuster für eine gemeinsame Kathoden-Anzeige (High = Segment an)
-        // Segmentreihenfolge: a, b, c, d, e, f, g
-        const byte segmentPatterns[10][7] = {
-            // Ziffer 0: a,b,c,d,e,f,g
-            {1,1,1,1,1,1,0}, // 0
-            {0,1,1,0,0,0,0}, // 1
-            {1,1,0,1,1,0,1}, // 2
-            {1,1,1,1,0,0,1}, // 3
-            {0,1,1,0,0,1,1}, // 4
-            {1,0,1,1,0,1,1}, // 5
-            {1,0,1,1,1,1,1}, // 6
-            {1,1,1,0,0,0,0}, // 7
-            {1,1,1,1,1,1,1}, // 8
-            {1,1,1,1,0,1,1}  // 9
-        };
+        //                    Normal {231,  33, 203, 107,  45, 110, 238,  39, 239, 111}
+        // Invertieren der Ausgänge  [255 - Zahl]
+        uint8_t digitToSegment[10] = { 24, 222,  52, 148, 210, 145,  17, 216,  16, 144};
 
-        uint8_t outputByte = 0; // Das Byte, das an den PCF8574 gesendet wird
+        uint8_t outputByte = digitToSegment[digit];
 
-        // Durchlaufen Sie die Segmente (a-g) und setzen Sie die entsprechenden Bits im outputByte
-        for (int i = 0; i < 7; i++) {
-            int pcfPin = _pinMap[i]; // PCF8574 Pin für das aktuelle Segment
-            byte state = segmentPatterns[digit][i]; // Zustand des Segments (an/aus)
-
-            if (state == 1) {
-                // Setze das Bit für den Segment-Pin auf HIGH (für Common Cathode)
-                outputByte |= (1 << pcfPin);
-            } else {
-                // Setze das Bit für den Segment-Pin auf LOW
-                outputByte &= ~(1 << pcfPin);
-            }
-        }
-        
-        // Dezimalpunkt steuern
-        if (showDecimalPoint) {
-            // Setze das Bit für den DP-Pin auf HIGH (für Common Cathode)
-            outputByte |= (1 << _dpPin);
-        } else {
-            // Setze das Bit für den DP-Pin auf LOW
-            outputByte &= ~(1 << _dpPin);
+        if(showDecimalPoint){
+            // Bit für den Dezimal Punkt einschalten
+            outputByte -= 16;
         }
 
+        Logger::log(LogLevel::Debug, "Zahl: " + String(digit)); // Umwandlung zu String für Konkatenation
+        Logger::log(LogLevel::Debug, "OutputByte: " + String(outputByte)); // Umwandlung zu String
         // Senden Sie das gesamte Byte an den PCF8574
         _pcf.write8(outputByte);
     }
 
     // Methode zum Ausschalten aller Segmente und des Dezimalpunkts
+    // Bedeutet jetzt: Alle Ausgänge auf HIGH setzen, sodass kein Segment leuchtet.
     void allSegmentsOff() {
-        uint8_t outputByte = 0; // Standardmäßig alle Bits auf 0
+        uint8_t outputByte = 0xFF; // Setze alle Bits auf 1 (HIGH), um alle Segmente auszuschalten (Common Anode)
+        Logger::log(LogLevel::Debug, "7-Segment Anzeige aus.");
 
-        // Stellen Sie sicher, dass die Bits für die tatsächlich verwendeten Pins auf 0 sind.
-        // Das ist wichtig, falls outputByte nicht mit 0xFF (für Common Anode) initialisiert wurde.
-        for (int i = 0; i < 7; i++) {
-            outputByte &= ~(1 << _pinMap[i]); // Setze das Bit für diesen Segment-Pin auf 0
-        }
-        outputByte &= ~(1 << _dpPin); // Setze das Bit für den DP-Pin auf 0
-
+        // Senden Sie das gesamte Byte an den PCF8574
         _pcf.write8(outputByte);
     }
 
 private:
-    PCF8574 _pcf;          // Referenz auf die PCF8574 Instanz
-    const int* _pinMap;     // Zeiger auf das Pin-Mapping Array für Segmente a-g
-    int _dpPin;             // Der PCF8574 Pin für den Dezimalpunkt
+    PCF8574 _pcf;           // Referenz auf die PCF8574 Instanz
 };
