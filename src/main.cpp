@@ -172,7 +172,8 @@ void ledStripTest(){
 
 
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(9600);
+    while(!Serial);
     Logger::setup(LOG_LEVEL); // Logger initialisieren (ohne NTP, da noch nicht verfügbar)
     Logger::log(LogLevel::Info, "Programm gestartet und Logger initialisiert.");
 

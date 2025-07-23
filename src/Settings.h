@@ -19,6 +19,6 @@
 #define LONGITUDE 7.640
 
 // LED Streifen Konfiguration
-#define LED_PIN        13 // Beispiel-Pin, passe dies an deinen ESP32 an
-#define NUM_LEDS      123 // Die Gesamtzahl deiner LEDs
+#define LED_PIN         2 // Beispiel-Pin, passe dies an deinen ESP32 an (Wird nach GPIO nummeriert in der FastLED Library)
+#define NUM_LEDS      123 // Die Gesamtzahl deiner LEDs (123)
 #define LED_BRIGHTNES 255 // Standard helligkeit der LEDs
