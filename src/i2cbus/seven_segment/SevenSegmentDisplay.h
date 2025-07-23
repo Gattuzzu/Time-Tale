@@ -37,7 +37,7 @@ public:
         Logger::log(LogLevel::Debug, "Zahl: " + String(digit)); // Umwandlung zu String für Konkatenation
         Logger::log(LogLevel::Debug, "OutputByte: " + String(outputByte)); // Umwandlung zu String
         // Senden Sie das gesamte Byte an den PCF8574
-        _pcf.write8(outputByte);
+        write8(outputByte);
     }
 
     // Methode zum Ausschalten aller Segmente und des Dezimalpunkts
@@ -47,9 +47,17 @@ public:
         Logger::log(LogLevel::Debug, "7-Segment Anzeige aus.");
 
         // Senden Sie das gesamte Byte an den PCF8574
-        _pcf.write8(outputByte);
+        write8(outputByte);
     }
 
 private:
     PCF8574 _pcf;           // Referenz auf die PCF8574 Instanz
+
+    void write8(uint8_t outputByte){
+        _pcf.write8(outputByte);
+        int error = _pcf.lastError();
+        if(error != 0){
+            Logger::log(LogLevel::Error, "Error beim übertragen der 7-Segment Anzeige: " + String(error));
+        }
+    }
 };
