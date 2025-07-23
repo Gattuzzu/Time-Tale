@@ -67,7 +67,9 @@ void setup() {
     pinMode(BUTTON_C, INPUT_PULLUP);
     
     Serial.begin(9600);
-    while(!Serial);
+    // while(!Serial);
+    delay(2000);
+
     Logger::setup(LOG_LEVEL); // Logger initialisieren (ohne NTP, da noch nicht verfügbar)
     Logger::log(LogLevel::Info, "Programm gestartet und Logger initialisiert.");
 
@@ -95,6 +97,8 @@ void setup() {
     // LED-Streifen Initialisieren
     myLedStrip = new LedStrip(LED_PIN, NUM_LEDS);
     ledStripTest();
+    myLedStrip->setSingleLED(1, 255, 0, 0); // °C
+    myLedStrip->setSingleLED(8, 0, 0, 255); // %
 
     // Sensoren
     tempHumi = new TempHumi();
@@ -113,6 +117,17 @@ void loop() {
   if (tempHumi->readData(actTemperature, actHumidity)) {
     Logger::log(LogLevel::Info, "Temperatur: " + String(actTemperature, 2) + "°C"); // 2 Nachkommastellen
     Logger::log(LogLevel::Info, "Feuchtigkeit: " + String(actHumidity, 2) + "%"); // 2 Nachkommastellen
+
+    // Temperatur Anzeigen auf 7 Segment Anzeige
+    int temp = actTemperature * 10; // Eine Komma Stelle soll angezeigt werden
+    sevenSegmentDisplays[0]->displayDigit(temp         % 10);
+    sevenSegmentDisplays[1]->displayDigit((temp /  10) % 10, true);
+    sevenSegmentDisplays[2]->displayDigit((temp / 100) % 10);
+
+    // Luftfeuchtigkeit Anzeigen auf 7 Segment Anzeige
+    int humi = actHumidity;
+    sevenSegmentDisplays[3]->displayDigit(humi         % 10);
+    sevenSegmentDisplays[4]->displayDigit((humi /  10) % 10);
 
   } else {
     Logger::log(LogLevel::Error, "Fehler beim Lesen der SHT30(TempHumi) Daten.");
