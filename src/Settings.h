@@ -21,4 +21,9 @@
 // LED Streifen Konfiguration
 #define LED_PIN         2 // Beispiel-Pin, passe dies an deinen ESP32 an (Wird nach GPIO nummeriert in der FastLED Library)
 #define NUM_LEDS      123 // Die Gesamtzahl deiner LEDs (123)
-#define LED_BRIGHTNES 255 // Standard helligkeit der LEDs
+#define LED_BRIGHTNES 255 // Standard helligkeit der LEDs (0-255)
+
+// Hardware Tasten
+#define BUTTON_A 12 // Oberster Button
+#define BUTTON_B 11 // Mittlerer Button
+#define BUTTON_C 10 // Unterster Button
