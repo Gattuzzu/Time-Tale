@@ -79,33 +79,3 @@ public:
 private:
     uint8_t _address; // Die I2C-Adresse des SHT30-Sensors
 };
-
-/*
- * Beispiel für die Verwendung im Arduino-Sketch (.ino-Datei):
- * * #include "SHT30.h" // Wenn du die Klasse in einer separaten .h/.cpp Datei hast
- * * SHT30 sensor(0x44); // Erstelle ein SHT30-Objekt mit der Adresse 0x44
- * // Wenn dein Sensor an 0x45 angeschlossen ist: SHT30 sensor(0x45);
- * * void setup() {
- * Serial.begin(9600); // Starte serielle Kommunikation für Debugging
- * Serial.println("Starte SHT30 Sensor Test...");
- * * if (!sensor.begin()) {
- * Serial.println("SHT30 Sensor nicht gefunden! Bitte Verkabelung und Adresse prüfen.");
- * while (1); // Stoppe das Programm, wenn der Sensor nicht gefunden wird
- * }
- * Serial.println("SHT30 Sensor gefunden und initialisiert.");
- * }
- * * void loop() {
- * float temperature;
- * float humidity;
- * * if (sensor.readData(temperature, humidity)) {
- * Serial.print("Temperatur: ");
- * Serial.print(temperature, 2); // 2 Nachkommastellen
- * Serial.print(" °C, Feuchtigkeit: ");
- * Serial.print(humidity, 2); // 2 Nachkommastellen
- * Serial.println(" %");
- * } else {
- * Serial.println("Fehler beim Lesen der SHT30 Daten.");
- * }
- * * delay(2000); // Warte 2 Sekunden vor der nächsten Messung
- * }
- */
