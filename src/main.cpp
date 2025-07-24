@@ -9,13 +9,13 @@
 #include "led/led_strip/LedStrip.h"
 #include "i2cbus/sensor/TempHumi.h"
 #include "i2cbus/sensor/AirQuality.h"
+#include "webservice/api/weather/WeatherData.h"
+#include "webservice/api/pollen/PollenData.h"
+#include "webservice/configuration/ConfigurationPortal.h"
 
 // Geheimnisse (API-Schlüssel, Koordinaten) und Einstellungen (NTP, AP-Details)
 #include "Secrets.h" // Enthält GOOGLE_ACCESS_TOKEN, LATITUDE, LONGITUDE
 #include "Settings.h" // Enthält NTP_SERVER, TIME_OFFSET, UPDATE_INTERVALL, AP_SSID, AP_PASSWORD
-#include <PCF8574.h>
-#include "i2cbus/seven_segment/SevenSegmentDisplay.h"
-#include "led/led_strip/LedStrip.h"
 
 // Lokale Speicher für API-Daten
 WeatherData currentWeatherData;
