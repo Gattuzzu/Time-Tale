@@ -16,6 +16,7 @@
 // Geheimnisse (API-Schlüssel, Koordinaten) und Einstellungen (NTP, AP-Details)
 #include "Secrets.h" // Enthält GOOGLE_ACCESS_TOKEN, LATITUDE, LONGITUDE
 #include "Settings.h" // Enthält NTP_SERVER, TIME_OFFSET, UPDATE_INTERVALL, AP_SSID, AP_PASSWORD
+#include "display/UpdateDisplay.h"
 
 // Lokale Speicher für API-Daten
 WeatherData currentWeatherData;
@@ -35,6 +36,9 @@ AirQuality* airQuality;
 
 // LED-Streifen
 LedStrip* myLedStrip;
+
+// Anzeige auf dem Display
+UpdateDisplay* updateDisplay;
 
 void sevenSegmentTest(SevenSegmentDisplay displays){
   for(int i = 0; i <= 10; i++){
@@ -123,15 +127,12 @@ void loop() {
     Logger::log(LogLevel::Info, "Feuchtigkeit: " + String(actHumidity, 2) + "%"); // 2 Nachkommastellen
 
     // Temperatur Anzeigen auf 7 Segment Anzeige
-    int temp = actTemperature * 10; // Eine Komma Stelle soll angezeigt werden
-    sevenSegmentDisplays[0]->displayDigit(temp         % 10);
-    sevenSegmentDisplays[1]->displayDigit((temp /  10) % 10, true);
-    sevenSegmentDisplays[2]->displayDigit((temp / 100) % 10);
+    updateDisplay->updateInTemp(actTemperature);
+    updateDisplay->updateInTempLED();
 
     // Luftfeuchtigkeit Anzeigen auf 7 Segment Anzeige
-    int humi = actHumidity;
-    sevenSegmentDisplays[3]->displayDigit(humi         % 10);
-    sevenSegmentDisplays[4]->displayDigit((humi /  10) % 10);
+    updateDisplay->updateInHumi(actHumidity);
+    updateDisplay->updateInHumiLED();
 
   } else {
     Logger::log(LogLevel::Error, "Fehler beim Lesen der SHT30(TempHumi) Daten.");
@@ -168,37 +169,9 @@ void loop() {
     if (iaqValue > 100.0) iaqValue = 100.0;
 
     // Farben definieren
-    uint8_t r, g, b;
+    updateDisplay->updateAirQuality(iaqValue);
 
-    if (iaqValue <= 20.0) {
-        // IAQ von 0 bis 20: Immer Rot
-        r = 255;
-        g = 0;
-        b = 0;
-
-    } else if (iaqValue >= 90.0) {
-        // IAQ von 90 bis 100: Immer Grün
-        r = 0;
-        g = 255;
-        b = 0;
-
-    } else if (iaqValue <= 55.0) { // Angepasster Mittelpunkt für den Gelb-Übergang
-        // IAQ von 20 bis 60: Rot nach Gelb
-        // IAQ 20  -> Rot (255, 0, 0)
-        // IAQ 55  -> Gelb (255, 255, 0)
-        r = 255;
-        g = (uint8_t)map(iaqValue, 20, 55, 0, 255);
-        b = 0;
-
-    } else {
-        // IAQ von 60 bis 100: Gelb nach Grün
-        // IAQ 55  -> Gelb (255, 255, 0)
-        // IAQ 90 -> Grün (0, 255, 0)
-        r = (uint8_t)map(iaqValue, 55, 90, 255, 0);
-        g = 255;
-        b = 0;
-    }
-    myLedStrip->setSingleLED(0, r, g, b);
+    
   }
 
 
