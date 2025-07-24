@@ -5,18 +5,16 @@
 #include "logger/Logger.h"
 #include "logger/LogLevel.h"
 
-#include "i2cbus/seven_segment/SevenSegmentDisplay.h"
-#include "led/led_strip/LedStrip.h"
 #include "i2cbus/sensor/TempHumi.h"
 #include "i2cbus/sensor/AirQuality.h"
 #include "webservice/api/weather/WeatherData.h"
 #include "webservice/api/pollen/PollenData.h"
 #include "webservice/configuration/ConfigurationPortal.h"
+#include "display/UpdateDisplay.h"
 
 // Geheimnisse (API-Schlüssel, Koordinaten) und Einstellungen (NTP, AP-Details)
 #include "Secrets.h" // Enthält GOOGLE_ACCESS_TOKEN, LATITUDE, LONGITUDE
 #include "Settings.h" // Enthält NTP_SERVER, TIME_OFFSET, UPDATE_INTERVALL, AP_SSID, AP_PASSWORD
-#include "display/UpdateDisplay.h"
 
 // Lokale Speicher für API-Daten
 WeatherData currentWeatherData;
@@ -26,16 +24,9 @@ PollenData currentPollenData;
 String savedWifiSsid = "";
 String savedWifiPassword = "";
 
-// Sieben Segment Anzeigen
-SevenSegmentDisplay* sevenSegmentDisplays[5]; 
-const uint8_t PCF_ADDRESSES[5] = {0x20, 0x21, 0x22, 0x23, 0x24};
-
 // Feuchtigkeitssensor
 TempHumi* tempHumi;
 AirQuality* airQuality;
-
-// LED-Streifen
-LedStrip* myLedStrip;
 
 // Anzeige auf dem Display
 UpdateDisplay* updateDisplay;
