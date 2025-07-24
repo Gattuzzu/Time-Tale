@@ -8,10 +8,13 @@ bool PollenClient::getCurrentPollen(float latitude, float longitude, PollenData&
     // Stellen Sie sicher, dass Sie getInstance() mit dem korrekten Host aufrufen.
     // Beispiel: PollenClient::getInstance("pollen.googleapis.com", "YOUR_API_KEY");
 
-    String path = "/v1/forecast:lookup?location.longitude=";
+    String path = "/v1/forecast:lookup?key=";
+    path += _apiKey;
+    path += "&location.longitude=";
     path += String(longitude, 6);
     path += "&location.latitude=";
     path += String(latitude, 6);
+    path += "&days=1";
     path += "&plantsDescription=false"; // Um unnötige Daten in der Antwort zu vermeiden
 
     JsonDocument doc;
@@ -55,9 +58,6 @@ bool PollenClient::parsePollenJson(JsonDocument& doc, PollenData& outPollenData)
           outPollenData.weedPollenLevel = value;
         }
       }
-
-      // Wenn du Debugging-Ausgaben möchtest:
-      // Logger::log(LogLevel::Debug, "PollenType: " + code + ", Value: " + String(value));
     }
 
     // Überprüfen, ob alle gewünschten Werte gefunden wurden (optional)
@@ -68,6 +68,8 @@ bool PollenClient::parsePollenJson(JsonDocument& doc, PollenData& outPollenData)
         // Du könntest hier auch false zurückgeben, je nachdem, wie kritisch das Fehlen dieser Daten ist.
         // Für dieses Beispiel lassen wir es bei true, wenn zumindest ein Teil geparst wurde.
     }
+
+    Logger::log(LogLevel::Info, outPollenData.toString());
 
     return true;
 }

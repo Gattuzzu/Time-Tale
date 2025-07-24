@@ -72,10 +72,10 @@ public:
 
     // Methode zum Mappen von / zu WeatherConditionType
     static WeatherConditionType weatherConditionStringToType(const String& typeString);
-    // const char* weatherConditionTypeToString(WeatherConditionType type);
+    static String weatherConditionTypeToString(WeatherConditionType type);
 
     // Methode zum Debugging (optional, kannst du bei Bedarf wieder einkommentieren)
-    // void printToSerial();
+    String toString();
 };
 
 #endif // WEATHER_DATA_H

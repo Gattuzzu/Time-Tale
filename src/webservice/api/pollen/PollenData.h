@@ -13,8 +13,7 @@ public:
     int treePollenLevel;  // Belastung für Baum
     int weedPollenLevel;  // Belastung für Kraut
 
-    // Optional: Eine Methode zum Debug-Ausgabe
-    // void printToSerial();
+    String toString();
 };
 
 #endif // POLLEN_DATA_H

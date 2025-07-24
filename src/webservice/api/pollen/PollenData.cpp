@@ -10,10 +10,11 @@ void PollenData::reset() {
     weedPollenLevel  = -1;
 }
 
-// void PollenData::printToSerial() {
-//     Serial.println("--- Pollen Data ---");
-//     Serial.print("Grass Pollen Level: "); Serial.println(grassPollenLevel);
-//     Serial.print("Tree Pollen Level: "); Serial.println(treePollenLevel);
-//     Serial.print("Weed Pollen Level: "); Serial.println(weedPollenLevel);
-//     Serial.println("--- End Pollen Data ---");
-// }
+String PollenData::toString() {
+    String s = "--- Pollen Data ---";
+           s += "\nGrass Pollen Level: " + String(grassPollenLevel);
+           s += "\nTree Pollen Level: " + String(treePollenLevel);
+           s += "\nWeed Pollen Level: " + String(weedPollenLevel);
+           s += "\n--- End Pollen Data ---";
+    return s;
+}
