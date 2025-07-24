@@ -176,7 +176,7 @@ void loop() {
         g = 0;
         b = 0;
 
-    } else if (iaqValue <= 20.0) {
+    } else if (iaqValue >= 90.0) {
         // IAQ von 90 bis 100: Immer Grün
         r = 0;
         g = 255;
