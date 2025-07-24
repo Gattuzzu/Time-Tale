@@ -1,202 +1,96 @@
-#include <Wire.h> // Arduino I2C Bibliothek
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME680.h>
 
-#define SGP30_DEFAULT_ADDRESS 0x58 // I2C-Adresse für den SGP30 Sensor
-
-// SGP30 Befehle (aus dem Datenblatt)
-#define SGP30_INIT_AIR_QUALITY      0x2003 // Initialisiere Air Quality Messung
-#define SGP30_MEASURE_AIR_QUALITY   0x2008 // Messe CO2eq und TVOC
-#define SGP30_GET_BASELINE          0x2015 // Lese Baseline-Werte aus
-#define SGP30_SET_BASELINE          0x201E // Setze Baseline-Werte
-#define SGP30_MEASURE_TEST          0x2032 // Selbsttest
-#define SGP30_SOFT_RESET            0x0006 // Software Reset
+#define SEALEVELPRESSURE_HPA (1013.25) // Standard Meeresspiegeldruck in hPa
 
 class AirQuality {
 public:
-    /**
-     * @brief Konstruktor für die SGP30-Klasse.
-     * @param address Die I2C-Adresse des SGP30-Sensors (Standard ist 0x58).
-     */
-    AirQuality(uint8_t address = SGP30_DEFAULT_ADDRESS) : _address(address) {}
+    // Konstruktor: Nimmt das Wire-Objekt und die I2C-Adresse entgegen
+    AirQuality(TwoWire* wire, uint8_t addr) :
+        bme(wire), // Initialisiert das Adafruit BME680 Objekt mit dem übergebenen Wire-Objekt
+        _i2cAddress(addr),
+        _initialized(false) {}
 
-    /**
-     * @brief Initialisiert den SGP30-Sensor und startet die Messung.
-     * Muss im setup() des Arduino aufgerufen werden.
-     * @return true, wenn der Sensor gefunden und initialisiert wurde, false sonst.
-     */
+    // Initialisiert den Sensor
     bool begin() {
-        Wire.begin(); // Initialisiere die I2C-Kommunikation
-        Wire.beginTransmission(_address);
-        if (Wire.endTransmission() != 0) {
-            return false; // Sensor nicht gefunden
-        }
-
-        // Führe Initialisierungsbefehl aus
-        return sendCommand(SGP30_INIT_AIR_QUALITY);
-    }
-
-    /**
-     * @brief Misst die CO2eq (äquivalenter CO2-Wert) und TVOC (Total Volatile Organic Compounds) Werte.
-     * Diese Funktion sollte alle ~1 Sekunde aufgerufen werden, damit der Sensor kalibrieren kann.
-     * @param co2eq Referenz für den CO2eq-Wert in ppm.
-     * @param tvoc Referenz für den TVOC-Wert in ppb.
-     * @return true, wenn die Werte erfolgreich gelesen wurden, false sonst.
-     */
-    bool readData(uint16_t &co2eq, uint16_t &tvoc) {
-        if (!sendCommand(SGP30_MEASURE_AIR_QUALITY)) {
+        if (!bme.begin(_i2cAddress)) {
+            Serial.println("Konnte BME680 nicht finden. Überprüfen Sie die Verkabelung und Adresse!");
+            _initialized = false;
             return false;
         }
 
-        delay(10); // Warte 10ms auf die Messung (siehe Datenblatt)
-
-        if (Wire.requestFrom(_address, (uint8_t)6) != 6) {
-            return false; // Konnte nicht alle 6 Bytes lesen
-        }
-
-        uint16_t co2eqRaw = Wire.read();
-        co2eqRaw = (co2eqRaw << 8) | Wire.read();
-        uint8_t crcCO2 = Wire.read(); // CRC-Byte für CO2eq (aktuell nicht geprüft)
-
-        uint16_t tvocRaw = Wire.read();
-        tvocRaw = (tvocRaw << 8) | Wire.read();
-        uint8_t crcTVOC = Wire.read(); // CRC-Byte für TVOC (aktuell nicht geprüft)
-
-        // Hier könnte eine CRC-Prüfung implementiert werden,
-        // um die Datenintegrität zu gewährleisten.
-
-        co2eq = co2eqRaw;
-        tvoc = tvocRaw;
-
+        // Optional: Sensoreinstellungen anpassen
+        bme.setTemperatureOversampling(BME680_OS_8X);
+        bme.setHumidityOversampling(BME680_OS_2X);
+        bme.setPressureOversampling(BME680_OS_4X);
+        bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
+        bme.setGasHeater(320, 150); // 320 C für 150 ms
+        _initialized = true;
+        Serial.println("BME680 initialisiert.");
         return true;
     }
 
-    /**
-     * @brief Liest die aktuelle Baseline der CO2eq- und TVOC-Werte aus.
-     * Diese Baseline kann gespeichert und beim nächsten Start des Sensors gesetzt werden.
-     * @param baseline_co2eq Referenz für den CO2eq-Baseline-Wert.
-     * @param baseline_tvoc Referenz für den TVOC-Baseline-Wert.
-     * @return true, wenn die Baseline erfolgreich gelesen wurde, false sonst.
-     */
-    bool getBaseline(uint16_t &baseline_co2eq, uint16_t &baseline_tvoc) {
-        if (!sendCommand(SGP30_GET_BASELINE)) {
+    // Liest alle Sensordaten und gibt true zurück, wenn erfolgreich
+    bool readSensorData() {
+        if (!_initialized) {
+            Serial.println("Sensor nicht initialisiert.");
             return false;
         }
-
-        delay(10); // Warte auf die Antwort
-
-        if (Wire.requestFrom(_address, (uint8_t)6) != 6) {
+        if (!bme.performReading()) {
+            Serial.println("Fehler beim Auslesen des BME680 Sensors!");
             return false;
         }
-
-        baseline_co2eq = Wire.read();
-        baseline_co2eq = (baseline_co2eq << 8) | Wire.read();
-        Wire.read(); // CRC
-
-        baseline_tvoc = Wire.read();
-        baseline_tvoc = (baseline_tvoc << 8) | Wire.read();
-        Wire.read(); // CRC
-
         return true;
     }
 
-    /**
-     * @brief Setzt eine gespeicherte Baseline für die CO2eq- und TVOC-Werte.
-     * Dies hilft dem Sensor, schneller stabile und genaue Messwerte zu liefern.
-     * @param baseline_co2eq Der zu setzende CO2eq-Baseline-Wert.
-     * @param baseline_tvoc Der zu setzende TVOC-Baseline-Wert.
-     * @return true, wenn die Baseline erfolgreich gesetzt wurde, false sonst.
-     */
-    bool setBaseline(uint16_t baseline_co2eq, uint16_t baseline_tvoc) {
-        Wire.beginTransmission(_address);
-        Wire.write((SGP30_SET_BASELINE >> 8) & 0xFF);
-        Wire.write(SGP30_SET_BASELINE & 0xFF);
-
-        // CO2eq Baseline
-        Wire.write((baseline_co2eq >> 8) & 0xFF);
-        Wire.write(baseline_co2eq & 0xFF);
-        Wire.write(calculateCrc(baseline_co2eq));
-
-        // TVOC Baseline
-        Wire.write((baseline_tvoc >> 8) & 0xFF);
-        Wire.write(baseline_tvoc & 0xFF);
-        Wire.write(calculateCrc(baseline_tvoc));
-
-        return Wire.endTransmission() == 0;
+    // Gibt die Temperatur in Grad Celsius zurück
+    float getTemperature() {
+        return bme.temperature;
     }
-    
-    /**
-     * @brief Führt einen Software-Reset des SGP30 durch.
-     * @return true, wenn der Reset-Befehl erfolgreich gesendet wurde, false sonst.
-     */
-    bool softReset() {
-        return sendCommand(SGP30_SOFT_RESET);
+
+    // Gibt die Luftfeuchtigkeit in Prozent zurück
+    float getHumidity() {
+        return bme.humidity;
+    }
+
+    // Gibt den Luftdruck in hPa (Hektopascal) zurück
+    float getPressure() {
+        return bme.pressure / 100.0; // Umrechnung von Pascal zu hPa
+    }
+
+    // Gibt den Gaswiderstand in Ohm zurück
+    int getGasResistance() {
+        return bme.gas_resistance;
+    }
+
+    // Berechnet und gibt den IAQ (Indoor Air Quality) Index zurück
+    // Hinweis: Die Berechnung des IAQ ist komplexer und benötigt typischerweise
+    // eine längere Kalibrierungsphase und eine spezifische Logik.
+    // Hier ist eine sehr einfache (nicht-standardisierte) Berechnung,
+    // die du anpassen musst, um genaue Ergebnisse zu erhalten.
+    float getIAQ() {
+        // Dies ist eine sehr vereinfachte IAQ-Berechnung.
+        // Für eine genauere IAQ, die den BME680 optimal nutzt,
+        // solltest du die Boschs BSEC Bibliothek in Betracht ziehen.
+        // (https://github.com/boschsensortec/BSEC-Arduino-Library)
+
+        // Beispiel einer vereinfachten IAQ-Berechnung basierend auf Gaswiderstand und Luftfeuchtigkeit
+        // Annahme: Höherer Gaswiderstand bei geringer Luftfeuchtigkeit bedeutet bessere Luftqualität
+        // (Dies ist nur ein Platzhalter und nicht wissenschaftlich fundiert!)
+
+        float iaq = 0.0;
+        if (bme.gas_resistance > 0) {
+            iaq = map(bme.gas_resistance, 0, 1000000, 100, 0); // Grobe Schätzung: Höherer Widerstand -> besser (0-100)
+            iaq = constrain(iaq, 0, 100); // Werte auf 0-100 begrenzen
+        }
+        // Du könntest hier auch die Luftfeuchtigkeit einbeziehen, z.B.
+        // iaq = iaq * (1 - (bme.humidity / 100.0));
+        return iaq;
     }
 
 private:
-    uint8_t _address; // Die I2C-Adresse des SGP30-Sensors
-
-    /**
-     * @brief Sendet einen 16-Bit-Befehl an den SGP30.
-     * @param command Der zu sendende 16-Bit-Befehl.
-     * @return true, wenn der Befehl erfolgreich gesendet wurde, false sonst.
-     */
-    bool sendCommand(uint16_t command) {
-        Wire.beginTransmission(_address);
-        Wire.write((command >> 8) & 0xFF); // High Byte
-        Wire.write(command & 0xFF);      // Low Byte
-        return Wire.endTransmission() == 0;
-    }
-
-    /**
-     * @brief Berechnet das CRC-Checksummen-Byte für 16-Bit-Daten (für Sensirion-Protokoll).
-     * @param data Der 16-Bit-Wert, für den das CRC berechnet werden soll.
-     * @return Das berechnete 8-Bit-CRC-Checksummen-Byte.
-     */
-    uint8_t calculateCrc(uint16_t data) {
-        uint8_t crc = 0xFF;
-        uint8_t byte[2];
-        byte[0] = (data >> 8) & 0xFF;
-        byte[1] = data & 0xFF;
-
-        for (uint8_t i = 0; i < 2; i++) {
-            crc ^= byte[i];
-            for (uint8_t bit = 8; bit > 0; --bit) {
-                if (crc & 0x80) {
-                    crc = (crc << 1) ^ 0x31; // 0x31 ist das Sensirion-Polynom
-                } else {
-                    crc = (crc << 1);
-                }
-            }
-        }
-        return crc;
-    }
+    Adafruit_BME680 bme;        // Adafruit BME680 Objekt
+    uint8_t _i2cAddress;        // I2C Adresse des Sensors
+    bool _initialized;          // Flag, ob der Sensor initialisiert wurde
 };
-
-/*
- * Beispiel für die Verwendung im Arduino-Sketch (.ino-Datei):
- * * #include "SGP30.h" // Wenn du die Klasse in einer separaten .h/.cpp Datei hast
- * * SGP30 sensor(0x58); // Erstelle ein SGP30-Objekt mit der Standardadresse 0x58
- * * void setup() {
- * Serial.begin(9600); // Starte serielle Kommunikation für Debugging
- * Serial.println("Starte SGP30 Sensor Test...");
- * * if (!sensor.begin()) {
- * Serial.println("SGP30 Sensor nicht gefunden oder initialisiert! Bitte Verkabelung und Adresse prüfen.");
- * while (1); // Stoppe das Programm, wenn der Sensor nicht gefunden wird
- * }
- * Serial.println("SGP30 Sensor gefunden und initialisiert. Bitte 10-15 Sekunden warten, bis Werte stabil sind.");
- * }
- * * void loop() {
- * uint16_t co2eq;
- * uint16_t tvoc;
- * * if (sensor.readData(co2eq, tvoc)) {
- * Serial.print("CO2eq: ");
- * Serial.print(co2eq);
- * Serial.print(" ppm, TVOC: ");
- * Serial.print(tvoc);
- * Serial.println(" ppb");
- * } else {
- * Serial.println("Fehler beim Lesen der SGP30 Daten.");
- * }
- * * // Der SGP30 benötigt alle 1 Sekunde eine Messung, damit die interne Kalibrierung funktioniert.
- * delay(1000); 
- * }
- */

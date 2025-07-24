@@ -102,7 +102,11 @@ void setup() {
 
     // Sensoren
     tempHumi = new TempHumi();
-    airQuality = new AirQuality();
+    airQuality = new AirQuality(&Wire, 0x76);
+    // Versuche, den Sensor zu initialisieren
+    if (!airQuality->begin()) {
+      Logger::log(LogLevel::Error, "Air Qualitäts Sensor konnte nicht gestartet werden!");
+    }
     
     Logger::log(LogLevel::Info, "Ende vom Setup!");
 
@@ -133,14 +137,68 @@ void loop() {
     Logger::log(LogLevel::Error, "Fehler beim Lesen der SHT30(TempHumi) Daten.");
   }
 
-  uint16_t co2eq;
-  uint16_t tvoc;
-   if (airQuality->readData(co2eq, tvoc)) {
-    Logger::log(LogLevel::Info, "CO2eq: " + String(co2eq) + "ppm");
-    Logger::log(LogLevel::Info, "TVOC: " + String(tvoc) + "ppb");
+  if (airQuality->readSensorData()) {
+    Serial.print("Temperatur = ");
+    Serial.print(airQuality->getTemperature());
+    Serial.println(" *C");
 
-  } else {
-    Logger::log(LogLevel::Error, "Fehler beim Lesen der SGP30(AirQuality) Daten.");
+    Serial.print("Luftdruck = ");
+    Serial.print(airQuality->getPressure());
+    Serial.println(" hPa");
+
+    Serial.print("Luftfeuchtigkeit = ");
+    Serial.print(airQuality->getHumidity());
+    Serial.println(" %");
+
+    Serial.print("Gaswiderstand = ");
+    Serial.print(airQuality->getGasResistance());
+    Serial.println(" Ohm");
+
+    // Die IAQ-Berechnung ist hier sehr vereinfacht!
+    Serial.print("Vereinfachter IAQ = ");
+    Serial.print(airQuality->getIAQ());
+    Serial.println(" (0-100)");
+
+    Serial.println();
+
+    // Anzeigen der Luftqualität
+    float iaqValue = airQuality->getIAQ();
+    // Sicherstellen, dass der IAQ-Wert im gültigen Bereich liegt
+    if (iaqValue < 0.0) iaqValue = 0.0;
+    if (iaqValue > 100.0) iaqValue = 100.0;
+
+    // Farben definieren
+    uint8_t r, g, b;
+
+    if (iaqValue <= 20.0) {
+        // IAQ von 0 bis 20: Immer Rot
+        r = 255;
+        g = 0;
+        b = 0;
+
+    } else if (iaqValue <= 20.0) {
+        // IAQ von 90 bis 100: Immer Grün
+        r = 0;
+        g = 255;
+        b = 0;
+
+    } else if (iaqValue <= 55.0) { // Angepasster Mittelpunkt für den Gelb-Übergang
+        // IAQ von 20 bis 60: Rot nach Gelb
+        // IAQ 20  -> Rot (255, 0, 0)
+        // IAQ 55  -> Gelb (255, 255, 0)
+        r = 255;
+        g = (uint8_t)map(iaqValue, 20, 55, 0, 255);
+        b = 0;
+
+    } else {
+        // IAQ von 60 bis 100: Gelb nach Grün
+        // IAQ 55  -> Gelb (255, 255, 0)
+        // IAQ 90 -> Grün (0, 255, 0)
+        r = (uint8_t)map(iaqValue, 55, 90, 255, 0);
+        g = 255;
+        b = 0;
+    }
+    myLedStrip->setSingleLED(0, r, g, b);
   }
 
 
