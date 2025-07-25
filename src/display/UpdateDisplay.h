@@ -193,9 +193,9 @@ class UpdateDisplay {
                 myLedStrip->setGroupLEDs(27, 6, r, g, b, false);                       // VIERTU
             }
             else if ((min >= 20 && min <= 24) || (min >= 40 && min <= 44)) {
-                myLedStrip->setGroupLEDs(45, 6, r, g, b, false);                       // ZWÄNZG
+                myLedStrip->setGroupLEDs(38, 6, r, g, b, false);                       // ZWÄNZG
             }
-            else if (min >= 25 && min <= 39) {
+            if (min >= 25 && min <= 39) {
                 myLedStrip->setGroupLEDs(50, 5, r, g, b, false);                       // HAUBI
             }
             
@@ -225,22 +225,22 @@ class UpdateDisplay {
             }
 
             // 0 Uhr wird als 12 Uhr angezeigt
-            if (hour = 0) {
+            if (hour == 0) {
                 hour += 12;
             }
 
-            if      (hour = 1)      myLedStrip->setGroupLEDs(59, 3, r, g, b);   // EIS
-            else if (hour = 2)      myLedStrip->setGroupLEDs(63, 4, r, g, b);   // ZWÖI
-            else if (hour = 3)      myLedStrip->setGroupLEDs(56, 3, r, g, b);   // DRÜ
-            else if (hour = 4)      myLedStrip->setGroupLEDs(72, 5, r, g, b);   // VIERI
-            else if (hour = 5)      myLedStrip->setGroupLEDs(67, 4, r, g, b);   // FÜFI
-            else if (hour = 6)      myLedStrip->setGroupLEDs(78, 6, r, g, b);   // SÄCHSI
-            else if (hour = 7)      myLedStrip->setGroupLEDs(84, 5, r, g, b);   // SIBNI
-            else if (hour = 8)      myLedStrip->setGroupLEDs(95, 5, r, g, b);   // ACHTI
-            else if (hour = 9)      myLedStrip->setGroupLEDs(91, 4, r, g, b);   // NÜNI
-            else if (hour = 10)     myLedStrip->setGroupLEDs(101, 4, r, g, b);  // ZÄNI
-            else if (hour = 11)     myLedStrip->setGroupLEDs(106, 4, r, g, b);  // EUFI
-            else if (hour = 12)     myLedStrip->setGroupLEDs(115, 6, r, g, b);  // ZWÖUFI
+            if      (hour == 1)      myLedStrip->setGroupLEDs(59, 3, r, g, b);   // EIS
+            else if (hour == 2)      myLedStrip->setGroupLEDs(63, 4, r, g, b);   // ZWÖI
+            else if (hour == 3)      myLedStrip->setGroupLEDs(56, 3, r, g, b);   // DRÜ
+            else if (hour == 4)      myLedStrip->setGroupLEDs(72, 5, r, g, b);   // VIERI
+            else if (hour == 5)      myLedStrip->setGroupLEDs(67, 4, r, g, b);   // FÜFI
+            else if (hour == 6)      myLedStrip->setGroupLEDs(78, 6, r, g, b);   // SÄCHSI
+            else if (hour == 7)      myLedStrip->setGroupLEDs(84, 5, r, g, b);   // SIBNI
+            else if (hour == 8)      myLedStrip->setGroupLEDs(95, 5, r, g, b);   // ACHTI
+            else if (hour == 9)      myLedStrip->setGroupLEDs(91, 4, r, g, b);   // NÜNI
+            else if (hour == 10)     myLedStrip->setGroupLEDs(101, 4, r, g, b);  // ZÄNI
+            else if (hour == 11)     myLedStrip->setGroupLEDs(106, 4, r, g, b);  // EUFI
+            else if (hour == 12)     myLedStrip->setGroupLEDs(115, 6, r, g, b);  // ZWÖUFI
    
         }
         
