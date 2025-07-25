@@ -61,3 +61,11 @@ NTPTimeSync::NTPTimeSync(const char* ntpServer, long timeOffset, long updateInte
     _NtpClient(_internalNtpUDP, ntpServer, timeOffset, updateInterval) {
   // Der Konstruktor kann leer bleiben.
 }
+
+int NTPTimeSync::getHour() {
+  return _NtpClient.getHours();
+}
+
+int NTPTimeSync::getMin() {
+  return _NtpClient.getMinutes();
+}

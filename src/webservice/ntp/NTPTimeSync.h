@@ -22,6 +22,8 @@ public:
   String getFormattedTime();
   time_t getEpochTime();
 
+  int getHour();
+  int getMin();
 private:
   NTPTimeSync(const char* ntpServer, long timeOffset, long updateInterval);
   NTPTimeSync(const NTPTimeSync&) = delete;
