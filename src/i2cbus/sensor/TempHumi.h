@@ -79,3 +79,6 @@ public:
 private:
     uint8_t _address; // Die I2C-Adresse des SHT30-Sensors
 };
+
+// Logger::log(LogLevel::Info, "Temperatur: " + String(actTemperature, 2) + "°C"); // 2 Nachkommastellen
+// Logger::log(LogLevel::Info, "Feuchtigkeit: " + String(actHumidity, 2) + "%"); // 2 Nachkommastellen

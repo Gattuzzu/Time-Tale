@@ -39,32 +39,11 @@ enum DeviceState {
 };
 
 DeviceState currentState = STATE_INITIALIZING; // Startzustand
+
 // Anzeige auf dem Display
 UpdateDisplay* updateDisplay;
 
-void sevenSegmentTest(SevenSegmentDisplay displays){
-  for(int i = 0; i <= 10; i++){
-    if(i == 10){
-      displays.displayDigit(9, true);
-    } else{
-      displays.displayDigit(i);
-    }
-    delay(250);
-  }
-  delay(250);
-  displays.allSegmentsOff();
-}
 
-void ledStripTest(){
-    myLedStrip->clearAll();
-    delay(200);
-    for(int i = 0; i < NUM_LEDS; i++) {
-        // LED-Streifen testen
-        myLedStrip->setSingleLED(i, 0, 0, 255); // Blaue LED
-        delay(200);
-        myLedStrip->clearSingleLED(i); // LED wieder ausschalten
-    } 
-}
 
 void setup() {
   // Eingänge für Buttons Initialisieren
@@ -101,12 +80,12 @@ void setup() {
     sevenSegmentDisplays[i] = new SevenSegmentDisplay(PCF_ADDRESSES[i]);
 
     // Test
-    // sevenSegmentTest(*sevenSegmentDisplays[i]);
+    // updateDisplay->sevenSegmentTest(*sevenSegmentDisplays[i]);
   }
 
   // LED-Streifen Initialisieren
   myLedStrip = new LedStrip(LED_PIN, NUM_LEDS);
-  // ledStripTest();
+  // updateDisplay->ledStripTest();
   myLedStrip->setSingleLED(1, 255, 0, 0); // °C
   myLedStrip->setSingleLED(8, 0, 0, 255); // %
 
@@ -125,47 +104,25 @@ void updateSensorValues(unsigned long &lastApiCall, boolean forceUpdate = false)
   if (forceUpdate || millis() - lastApiCall >= SENSOR_UPDATE_CYCLE ) {
     lastApiCall = millis();
 
+    // Temperatur und Luftfeuchtigkeit
     float actTemperature;
     float actHumidity;
     if (tempHumi->readData(actTemperature, actHumidity)) {
-      Logger::log(LogLevel::Info, "Temperatur: " + String(actTemperature, 2) + "°C"); // 2 Nachkommastellen
-      Logger::log(LogLevel::Info, "Feuchtigkeit: " + String(actHumidity, 2) + "%"); // 2 Nachkommastellen
 
-      // Temperatur Anzeigen auf 7 Segment Anzeige
-      updateDisplay->updateInTemp(actTemperature);
-      updateDisplay->updateInTempLED();
+    // Temperatur Anzeigen auf 7 Segment Anzeige
+    updateDisplay->updateTemperature(actTemperature);
+    updateDisplay->updateTempLED(true);
 
-      // Luftfeuchtigkeit Anzeigen auf 7 Segment Anzeige
-      updateDisplay->updateInHumi(actHumidity);
-      updateDisplay->updateInHumiLED();
+    // Luftfeuchtigkeit Anzeigen auf 7 Segment Anzeige
+    updateDisplay->updateHumidity(actHumidity);
+    updateDisplay->updateHumiLED(true);
 
     } else {
       Logger::log(LogLevel::Error, "Fehler beim Lesen der SHT30(TempHumi) Daten.");
     }
 
+    //Luftqualität
     if (airQuality->readSensorData()) {
-      Serial.print("Temperatur = ");
-      Serial.print(airQuality->getTemperature());
-      Serial.println(" *C");
-
-      Serial.print("Luftdruck = ");
-      Serial.print(airQuality->getPressure());
-      Serial.println(" hPa");
-
-      Serial.print("Luftfeuchtigkeit = ");
-      Serial.print(airQuality->getHumidity());
-      Serial.println(" %");
-
-      Serial.print("Gaswiderstand = ");
-      Serial.print(airQuality->getGasResistance());
-      Serial.println(" Ohm");
-
-      // Die IAQ-Berechnung ist hier sehr vereinfacht!
-      Serial.print("Vereinfachter IAQ = ");
-      Serial.print(airQuality->getIAQ());
-      Serial.println(" (0-100)");
-
-      Serial.println();
 
       // Anzeigen der Luftqualität
       float iaqValue = airQuality->getIAQ();
@@ -176,6 +133,9 @@ void updateSensorValues(unsigned long &lastApiCall, boolean forceUpdate = false)
       // Farben definieren
       updateDisplay->updateAirQuality(iaqValue);
 
+    }
+    else {
+      Logger::log(LogLevel::Error, "Fehler beim Lesen der Luftqualität Daten.");
     }
   }
 }
@@ -305,51 +265,11 @@ void updateWeatherApi(unsigned long &lastApiCall, boolean forceUpdate = false){
             Logger::log(LogLevel::Info, "Wetterdaten erfolgreich abgerufen.");
             
             // Anzeigen
-            myLedStrip->clearGroupLEDs(2, 6);
-            switch(currentWeatherData.weatherType){
-              // case WeatherConditionType::TYPE_UNSPECIFIED: ; break;
-              case WeatherConditionType::CLEAR: myLedStrip->setSingleLED(7, 255, 255, 0); break;
-              // case WeatherConditionType::MOSTLY_CLEAR: ; break;
-              case WeatherConditionType::PARTLY_CLOUDY: myLedStrip->setSingleLED(6, 143, 139, 102); break;
-              // case WeatherConditionType::MOSTLY_CLOUDY: ; break;
-              case WeatherConditionType::CLOUDY: myLedStrip->setSingleLED(5, 128, 128, 128); break;
-              // case WeatherConditionType::WINDY: ; break;
-              // case WeatherConditionType::WIND_AND_RAIN: ; break;
-              // case WeatherConditionType::LIGHT_RAIN_SHOWERS: ; break;
-              // case WeatherConditionType::CHANCE_OF_SHOWERS: ; break;
-              // case WeatherConditionType::SCATTERED_SHOWERS: ; break;
-              // case WeatherConditionType::RAIN_SHOWERS: ; break;
-              // case WeatherConditionType::HEAVY_RAIN_SHOWERS: ; break;
-              // case WeatherConditionType::LIGHT_TO_MODERATE_RAIN: ; break;
-              // case WeatherConditionType::MODERATE_TO_HEAVY_RAIN: ; break;
-              case WeatherConditionType::RAIN: myLedStrip->setSingleLED(4, 0, 0, 255); break;
-              // case WeatherConditionType::LIGHT_RAIN: ; break;
-              // case WeatherConditionType::HEAVY_RAIN: ; break;
-              // case WeatherConditionType::RAIN_PERIODICALLY_HEAVY: ; break;
-              // case WeatherConditionType::LIGHT_SNOW_SHOWERS: ; break;
-              // case WeatherConditionType::CHANCE_OF_SNOW_SHOWERS: ; break;
-              // case WeatherConditionType::SCATTERED_SNOW_SHOWERS: ; break;
-              // case WeatherConditionType::SNOW_SHOWERS: return ; break;
-              // case WeatherConditionType::HEAVY_SNOW_SHOWERS: ; break;
-              // case WeatherConditionType::LIGHT_TO_MODERATE_SNOW: ; break;
-              // case WeatherConditionType::MODERATE_TO_HEAVY_SNOW: ; break;
-              case WeatherConditionType::SNOW: myLedStrip->setSingleLED(2, 255, 255, 255); break;
-              // case WeatherConditionType::LIGHT_SNOW: ; break;
-              // case WeatherConditionType::HEAVY_SNOW: ; break;
-              // case WeatherConditionType::SNOWSTORM: ; break;
-              // case WeatherConditionType::SNOW_PERIODICALLY_HEAVY: ; break;
-              // case WeatherConditionType::HEAVY_SNOW_STORM: ; break;
-              // case WeatherConditionType::BLOWING_SNOW: ; break;
-              // case WeatherConditionType::RAIN_AND_SNOW: ; break;
-              // case WeatherConditionType::HAIL: ; break;
-              // case WeatherConditionType::HAIL_SHOWERS: ; break;
-              case WeatherConditionType::THUNDERSTORM: myLedStrip->setSingleLED(3, 255, 255, 0); break;
-              // case WeatherConditionType::THUNDERSHOWER: ; break;
-              // case WeatherConditionType::LIGHT_THUNDERSTORM_RAIN: ; break;
-              // case WeatherConditionType::SCATTERED_THUNDERSTORMS: ; break;
-              // case WeatherConditionType::HEAVY_THUNDERSTORM: ; break;
-              case WeatherConditionType::UNKNOWN: break; // Fallback -> Nichts anzeigen break;
-            }
+            updateDisplay->updateWeather(currentWeatherData.weatherType);
+            updateDisplay->updateTemperature(currentWeatherData.temperature.degrees);
+            updateDisplay->updateTempLED(false);
+            updateDisplay->updateHumidity(currentWeatherData.relativeHumidity);
+            updateDisplay->updateHumiLED(false);
 
         } else {
             Logger::log(LogLevel::Error, "Fehler beim Abrufen der Wetterdaten.");
@@ -366,13 +286,9 @@ void updatePollenApi(unsigned long &lastApiCall , boolean forceUpdate = false){
         if (PollenClient::getInstance().getCurrentPollen(LATITUDE, LONGITUDE, currentPollenData)) {
             Logger::log(LogLevel::Info, "Pollendaten erfolgreich abgerufen.");
             
-            // Anzeigen
-            int r, g, b; 
+            // Anzeigen 
             int maxPollenLevel = max(currentPollenData.grassPollenLevel, max(currentPollenData.treePollenLevel, currentPollenData.weedPollenLevel));
-            r = map(maxPollenLevel, 0, 5, 0, 255); // Rotanteil steigt von 0 (Grün) auf 255 (Rot)
-            g = map(maxPollenLevel, 0, 5, 255, 0); // Grünanteil sinkt von 255 (Grün) auf 0 (Rot)
-            b = 0;                                 // Blau ist immer 0
-            myLedStrip->setGroupLEDs(9, 3, r, g, b);
+            updateDisplay->updatePollen(maxPollenLevel);
 
         } else {
             Logger::log(LogLevel::Error, "Fehler beim Abrufen der Pollendaten.");
@@ -450,7 +366,9 @@ void loop() {
 
       // --- Dein normaler Betriebs-Code, der nur bei bestehender WLAN-Verbindung läuft ---
       NTPTimeSync::getInstance().update(); // Zeit aktualisieren
-      
+
+      updateDisplay->updateTime(NTPTimeSync::getInstance().getHour(), NTPTimeSync::getInstance().getMin());
+
       updateWeatherApi(lastApiCallWeather);
       updatePollenApi(lastApiCallPollen);
 

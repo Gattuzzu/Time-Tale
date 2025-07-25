@@ -94,3 +94,26 @@ private:
     uint8_t _i2cAddress;        // I2C Adresse des Sensors
     bool _initialized;          // Flag, ob der Sensor initialisiert wurde
 };
+
+    // Serial.print("Temperatur = ");
+    // Serial.print(airQuality->getTemperature());
+    // Serial.println(" *C");
+
+    // Serial.print("Luftdruck = ");
+    // Serial.print(airQuality->getPressure());
+    // Serial.println(" hPa");
+
+    // Serial.print("Luftfeuchtigkeit = ");
+    // Serial.print(airQuality->getHumidity());
+    // Serial.println(" %");
+
+    // Serial.print("Gaswiderstand = ");
+    // Serial.print(airQuality->getGasResistance());
+    // Serial.println(" Ohm");
+
+    // // Die IAQ-Berechnung ist hier sehr vereinfacht!
+    // Serial.print("Vereinfachter IAQ = ");
+    // Serial.print(airQuality->getIAQ());
+    // Serial.println(" (0-100)");
+
+    // Serial.println();

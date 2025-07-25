@@ -17,7 +17,7 @@ class UpdateDisplay {
     public:
 
         // Wert von Temperatur an die Anzeige übergeben.
-        void updateInTemp(float temperature) {
+        void updateTemperature(float temperature) {
             
             Logger::log(LogLevel::Debug, "Temperatur: " + String(temperature, 2) + "°C"); // 2 Nachkommastellen
 
@@ -51,7 +51,7 @@ class UpdateDisplay {
         }
 
         // Wert von Feuchtigkeit an die Anzeige übergeben
-        void updateInHumi(float humidity) {
+        void updateHumidity(float humidity) {
             
             Logger::log(LogLevel::Debug, "Feuchtigkeit: " + String(humidity, 2) + "%"); // 2 Nachkommastellen
 
@@ -111,47 +111,182 @@ class UpdateDisplay {
         }
 
         // Wert des Wetters an die Anzeige übergeben.
-        void updateWeather(){
-
-        }
-
-        // Wert von Temperatur von draussen an die Anzeige übergeben.
-        void updateOutTemp() {
-
-        }
-
-        // Wert von Feuchtigkeit von draussen an die Anzeige übergeben.
-        void updateOutHumi() {
-
+        void updateWeather(WeatherConditionType weather) {
+            myLedStrip->clearGroupLEDs(2, 6, false);
+            switch(weather){
+                // case WeatherConditionType::TYPE_UNSPECIFIED: ; break;
+                case WeatherConditionType::CLEAR: myLedStrip->setSingleLED(7, 255, 255, 0); break;
+                // case WeatherConditionType::MOSTLY_CLEAR: ; break;
+                case WeatherConditionType::PARTLY_CLOUDY: myLedStrip->setSingleLED(6, 143, 139, 102); break;
+                // case WeatherConditionType::MOSTLY_CLOUDY: ; break;
+                case WeatherConditionType::CLOUDY: myLedStrip->setSingleLED(5, 128, 128, 128); break;
+                // case WeatherConditionType::WINDY: ; break;
+                // case WeatherConditionType::WIND_AND_RAIN: ; break;
+                // case WeatherConditionType::LIGHT_RAIN_SHOWERS: ; break;
+                // case WeatherConditionType::CHANCE_OF_SHOWERS: ; break;
+                // case WeatherConditionType::SCATTERED_SHOWERS: ; break;
+                // case WeatherConditionType::RAIN_SHOWERS: ; break;
+                // case WeatherConditionType::HEAVY_RAIN_SHOWERS: ; break;
+                // case WeatherConditionType::LIGHT_TO_MODERATE_RAIN: ; break;
+                // case WeatherConditionType::MODERATE_TO_HEAVY_RAIN: ; break;
+                case WeatherConditionType::RAIN: myLedStrip->setSingleLED(4, 0, 0, 255); break;
+                // case WeatherConditionType::LIGHT_RAIN: ; break;
+                // case WeatherConditionType::HEAVY_RAIN: ; break;
+                // case WeatherConditionType::RAIN_PERIODICALLY_HEAVY: ; break;
+                // case WeatherConditionType::LIGHT_SNOW_SHOWERS: ; break;
+                // case WeatherConditionType::CHANCE_OF_SNOW_SHOWERS: ; break;
+                // case WeatherConditionType::SCATTERED_SNOW_SHOWERS: ; break;
+                // case WeatherConditionType::SNOW_SHOWERS: return ; break;
+                // case WeatherConditionType::HEAVY_SNOW_SHOWERS: ; break;
+                // case WeatherConditionType::LIGHT_TO_MODERATE_SNOW: ; break;
+                // case WeatherConditionType::MODERATE_TO_HEAVY_SNOW: ; break;
+                case WeatherConditionType::SNOW: myLedStrip->setSingleLED(2, 255, 255, 255); break;
+                // case WeatherConditionType::LIGHT_SNOW: ; break;
+                // case WeatherConditionType::HEAVY_SNOW: ; break;
+                // case WeatherConditionType::SNOWSTORM: ; break;
+                // case WeatherConditionType::SNOW_PERIODICALLY_HEAVY: ; break;
+                // case WeatherConditionType::HEAVY_SNOW_STORM: ; break;
+                // case WeatherConditionType::BLOWING_SNOW: ; break;
+                // case WeatherConditionType::RAIN_AND_SNOW: ; break;
+                // case WeatherConditionType::HAIL: ; break;
+                // case WeatherConditionType::HAIL_SHOWERS: ; break;
+                case WeatherConditionType::THUNDERSTORM: myLedStrip->setSingleLED(3, 255, 255, 0); break;
+                // case WeatherConditionType::THUNDERSHOWER: ; break;
+                // case WeatherConditionType::LIGHT_THUNDERSTORM_RAIN: ; break;
+                // case WeatherConditionType::SCATTERED_THUNDERSTORMS: ; break;
+                // case WeatherConditionType::HEAVY_THUNDERSTORM: ; break;
+                case WeatherConditionType::UNKNOWN: myLedStrip->clearGroupLEDs(2, 6); break; // Fallback -> Nichts anzeigen break;
+            }
         }
 
         // Wert der Pollen an die Anzeige übergeben.
-        void updatePollen() {
-
+        void updatePollen(int maxPollenLevel) {
+            int r, g, b; 
+            r = map(maxPollenLevel, 0, 5, 0, 255); // Rotanteil steigt von 0 (Grün) auf 255 (Rot)
+            g = map(maxPollenLevel, 0, 5, 255, 0); // Grünanteil sinkt von 255 (Grün) auf 0 (Rot)
+            b = 0;                                 // Blau ist immer 0
+            myLedStrip->setGroupLEDs(9, 3, r, g, b);
         }
 
         // Wert der Zeit an die Anzeige übergeben.
-        void updateTime() {
+        void updateTime(int hour, int min) {
 
+            int r, g, b;
+            r = 0;
+            g = 0;
+            b = 255;
+
+            // Alle LEDs erst Lichter ausstellen
+            myLedStrip->clearGroupLEDs(12, 111, false);
+            // ES ISCH
+            myLedStrip->setGroupLEDs(21, 2, r, g, b, false); // ES
+            myLedStrip->setGroupLEDs(16, 4, r, g, b, false); // ISCH
+
+            // Minuten in fünfer Schritten anzeigen
+            if ((min >= 5 && min <= 9) || (min >= 25 && min <= 29) || (min >= 35 && min <= 39) || (min >= 55 && min <= 59)) {
+                myLedStrip->setGroupLEDs(12, 3, r, g, b, false);                       // FÜF
+            }
+            else if ((min >= 10 && min <= 14) || (min >= 50 && min <= 54)) {
+                myLedStrip->setGroupLEDs(23, 3, r, g, b, false);                       // ZÄÄ
+            }
+            else if ((min >= 15 && min <= 19) || (min >= 45 && min <= 49)) {
+                myLedStrip->setGroupLEDs(27, 6, r, g, b, false);                       // VIERTU
+            }
+            else if ((min >= 20 && min <= 24) || (min >= 40 && min <= 44)) {
+                myLedStrip->setGroupLEDs(45, 6, r, g, b, false);                       // ZWÄNZG
+            }
+            else if (min >= 25 && min <= 39) {
+                myLedStrip->setGroupLEDs(50, 5, r, g, b, false);                       // HAUBI
+            }
+            
+
+            // AB, VOR oder keines von beiden
+            if((min >= 5 && min <= 24) || (min >= 35 && min <= 39)) {
+                myLedStrip->setGroupLEDs(34, 2, r, g, b, false);                       // AB    
+            }
+            else if ((min >= 25 && min <= 29) || (min >= 40 && min <= 59)) {
+                myLedStrip->setGroupLEDs(45, 3, r, g, b, false);                       // VOR
+            }
+            else {
+                                                                                // Haubi und Punkt
+            }
+            
+            
+            //Stunden anzeigen
+
+            // Ab der 25. Minute wird die nachfolgende Stunde angezeigt ( z.B. 6:35 ist FÜF AB HALBI SIBNI)
+            if (min >= 25) {
+                hour += 1;
+            }
+
+            // Wir zeigen die Stunden 1 - 12 an, deshalb für alle zahlen ab 13 werden -12
+            if (hour > 12) {
+                hour -= 12;
+            }
+
+            // 0 Uhr wird als 12 Uhr angezeigt
+            if (hour = 0) {
+                hour += 12;
+            }
+
+            if      (hour = 1)      myLedStrip->setGroupLEDs(59, 3, r, g, b);   // EIS
+            else if (hour = 2)      myLedStrip->setGroupLEDs(63, 4, r, g, b);   // ZWÖI
+            else if (hour = 3)      myLedStrip->setGroupLEDs(56, 3, r, g, b);   // DRÜ
+            else if (hour = 4)      myLedStrip->setGroupLEDs(72, 5, r, g, b);   // VIERI
+            else if (hour = 5)      myLedStrip->setGroupLEDs(67, 4, r, g, b);   // FÜFI
+            else if (hour = 6)      myLedStrip->setGroupLEDs(78, 6, r, g, b);   // SÄCHSI
+            else if (hour = 7)      myLedStrip->setGroupLEDs(84, 5, r, g, b);   // SIBNI
+            else if (hour = 8)      myLedStrip->setGroupLEDs(95, 5, r, g, b);   // ACHTI
+            else if (hour = 9)      myLedStrip->setGroupLEDs(91, 4, r, g, b);   // NÜNI
+            else if (hour = 10)     myLedStrip->setGroupLEDs(101, 4, r, g, b);  // ZÄNI
+            else if (hour = 11)     myLedStrip->setGroupLEDs(106, 4, r, g, b);  // EUFI
+            else if (hour = 12)     myLedStrip->setGroupLEDs(115, 6, r, g, b);  // ZWÖUFI
+   
         }
         
         //
-        void updateInTempLED() {
-            myLedStrip->setSingleLED(1, 255, 255, 0);
+        void updateTempLED(boolean isIndoor) {
+            if(isIndoor) {
+                myLedStrip->setSingleLED(1, 255, 255, 0);
+            }
+            else {
+                myLedStrip->setSingleLED(1, 255, 0, 0);
+            }
         }
 
         //
-        void updateOutTempLED() {
-            myLedStrip->setSingleLED(1, 255, 0, 0);
+        void updateHumiLED(boolean isIndoor) {
+            if(isIndoor) {
+                myLedStrip->setSingleLED(8, 255, 255, 0);
+            }
+            else {
+                myLedStrip->setSingleLED(8, 255, 0, 0);
+            }
         }
 
-        //
-        void updateInHumiLED() {
-            myLedStrip->setSingleLED(8, 255, 255, 0);
+        // Testen der Sieben Segment Anzeige
+        void sevenSegmentTest(SevenSegmentDisplay displays){
+            for(int i = 0; i <= 10; i++){
+                if(i == 10){
+                displays.displayDigit(9, true);
+                } else{
+                displays.displayDigit(i);
+                }
+                delay(250);
+            }
+            delay(250);
+            displays.allSegmentsOff();
         }
 
-        //
-        void updateOutHumiLED() {
-            myLedStrip->setSingleLED(8, 255, 0, 0);
+        // Testen des LED Strip
+        void ledStripTest(){
+            myLedStrip->clearAll();
+            delay(200);
+            for(int i = 0; i < NUM_LEDS; i++) {
+                // LED-Streifen testen
+                myLedStrip->setSingleLED(i, 0, 0, 255); // Blaue LED
+                delay(200);
+                myLedStrip->clearSingleLED(i); // LED wieder ausschalten
+            } 
         }
 };
