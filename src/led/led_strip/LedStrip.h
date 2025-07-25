@@ -64,14 +64,16 @@ public:
     // @param r: Rot-Wert (0-255)
     // @param g: Grün-Wert (0-255)
     // @param b: Blau-Wert (0-255)
-    void setGroupLEDs(int startIndex, int count, byte r, byte g, byte b) {
+    void setGroupLEDs(int startIndex, int count, byte r, byte g, byte b, boolean show = true) {
         for (int i = 0; i < count; i++) {
             int currentLEDIndex = startIndex + i;
             if (currentLEDIndex >= 0 && currentLEDIndex < NUM_LEDS) {
                 leds[currentLEDIndex] = CRGB(r, g, b);
             }
         }
-        FastLED.show();
+        if(show) {
+            FastLED.show();
+        }
     }
 
     // Methode zum Ausschalten einer einzelnen LED
@@ -80,8 +82,8 @@ public:
     }
 
     // Methode zum Ausschalten einer Gruppe von LEDs
-    void clearGroupLEDs(int index, int count){
-      setGroupLEDs(index, count, 0, 0, 0);
+    void clearGroupLEDs(int index, int count, boolean show = true){
+      setGroupLEDs(index, count, 0, 0, 0, show);
     }
 
     // Methode zum Ausschalten aller LEDs
