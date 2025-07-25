@@ -69,6 +69,7 @@ public:
 
         // Berechne Temperatur in °C
         temperature = -45.0f + 175.0f * ((float)tempRaw / 65535.0f);
+        temperature -= 1; // Korrektur, da er etwas zu warm misst
 
         // Berechne relative Feuchtigkeit in %
         humidity = 100.0f * ((float)humidityRaw / 65535.0f);
