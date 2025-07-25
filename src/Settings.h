@@ -27,3 +27,6 @@
 #define BUTTON_A 12 // Oberster Button
 #define BUTTON_B 11 // Mittlerer Button
 #define BUTTON_C 10 // Unterster Button
+
+// Sensor Konfiguration
+#define SENSOR_UPDATE_CYCLE 1000 // 1 Sekunde
