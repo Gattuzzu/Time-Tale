@@ -62,6 +62,9 @@ void setup() {
   Logger::log(LogLevel::Info, "Programm gestartet und Logger initialisiert.");
   Serial.println("Hallo vom Setup");
 
+  // Display Initialisieren
+  updateDisplay = new UpdateDisplay();
+
   // Initialisiere ConfigurationPortal Singleton, damit es Preferences öffnen kann
   ConfigurationPortal::getInstance();
 
@@ -96,7 +99,7 @@ void setup() {
   if (!airQuality->begin()) {
     Logger::log(LogLevel::Error, "Air Qualitäts Sensor konnte nicht gestartet werden!");
   }
-  
+
   Logger::log(LogLevel::Info, "Ende vom Setup!");
 }
 
@@ -264,13 +267,6 @@ void updateWeatherApi(unsigned long &lastApiCall, boolean forceUpdate = false){
         if (WeatherClient::getInstance().getCurrentConditions(LATITUDE, LONGITUDE, currentWeatherData)) {
             Logger::log(LogLevel::Info, "Wetterdaten erfolgreich abgerufen.");
             
-            // Anzeigen
-            updateDisplay->updateWeather(currentWeatherData.weatherType);
-            updateDisplay->updateTemperature(currentWeatherData.temperature.degrees);
-            updateDisplay->updateTempLED(false);
-            updateDisplay->updateHumidity(currentWeatherData.relativeHumidity);
-            updateDisplay->updateHumiLED(false);
-
         } else {
             Logger::log(LogLevel::Error, "Fehler beim Abrufen der Wetterdaten.");
         }
@@ -306,8 +302,23 @@ void loop() {
   static unsigned long lastApiCallPollen = 0;
   // Sensoren
   static unsigned long lastSensorCall = 0;
-  
-  updateSensorValues(lastSensorCall);
+  static unsigned long showIndoorValues = 0;
+  static boolean showIndoor = true;
+
+  if (millis() - showIndoorValues <= SENSOR_TIME_SHOW_INDOOR || currentState != STATE_NORMAL_OPERATION){
+    updateSensorValues(lastSensorCall);
+
+  } else{
+    if (millis() - showIndoorValues >= SENSOR_TIME_SHOW_INDOOR + SENSOR_TIME_SHOW_OUTDOOR){
+      showIndoorValues = millis();
+    }
+    // Anzeigen
+    updateDisplay->updateWeather(currentWeatherData.weatherType);
+    updateDisplay->updateTemperature(currentWeatherData.temperature.degrees);
+    updateDisplay->updateTempLED(false);
+    updateDisplay->updateHumidity(currentWeatherData.relativeHumidity);
+    updateDisplay->updateHumiLED(false);
+  }
 
   switch (currentState) {
     case STATE_INITIALIZING:

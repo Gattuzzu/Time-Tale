@@ -15,39 +15,44 @@ LedStrip* myLedStrip;
 
 class UpdateDisplay {
     public:
+        // Konstruktor
+        UpdateDisplay() : lastTemp(0.0f){
+
+        }
 
         // Wert von Temperatur an die Anzeige übergeben.
         void updateTemperature(float temperature) {
-            
-            Logger::log(LogLevel::Debug, "Temperatur: " + String(temperature, 2) + "°C"); // 2 Nachkommastellen
+            if(abs(lastTemp - temperature) > 0.1){
 
-            // Temperatur Anzeigen auf 7 Segment Anzeige
-            int temp = temperature * 10; // Eine Komma Stelle soll angezeigt werden
-
-            if (temp >= 0) {
-                sevenSegmentDisplays[0]->displayDigit(temp         % 10);
-                sevenSegmentDisplays[1]->displayDigit((temp /  10) % 10, true);
-
-                if(temp >= 100) {
-                    sevenSegmentDisplays[2]->displayDigit((temp / 100) % 10);
-                }
-                else {
-                    sevenSegmentDisplays[2]->allSegmentsOff();
-                }
-            }
-            else {
-                sevenSegmentDisplays[2]->displayMinus();
-                temp = abs(temp);
-                if (temp <= 99) {
+                Logger::log(LogLevel::Debug, "Temperatur: " + String(temperature, 2) + "°C"); // 2 Nachkommastellen
+                
+                // Temperatur Anzeigen auf 7 Segment Anzeige
+                int temp = temperature * 10; // Eine Komma Stelle soll angezeigt werden
+                lastTemp = static_cast<float>(temp) / 10; // Temperatur in Float umrechnen, aber mit nur einer Komma Zahl.
+                if (temp >= 0) {
                     sevenSegmentDisplays[0]->displayDigit(temp         % 10);
                     sevenSegmentDisplays[1]->displayDigit((temp /  10) % 10, true);
+                    
+                    if(temp >= 100) {
+                        sevenSegmentDisplays[2]->displayDigit((temp / 100) % 10);
+                    }
+                    else {
+                        sevenSegmentDisplays[2]->allSegmentsOff();
+                    }
                 }
                 else {
-                    sevenSegmentDisplays[0]->displayDigit((temp /  10) % 10);
-                    sevenSegmentDisplays[1]->displayDigit((temp / 100) % 10);
+                    sevenSegmentDisplays[2]->displayMinus();
+                    temp = abs(temp);
+                    if (temp <= 99) {
+                        sevenSegmentDisplays[0]->displayDigit(temp         % 10);
+                        sevenSegmentDisplays[1]->displayDigit((temp /  10) % 10, true);
+                    }
+                    else {
+                        sevenSegmentDisplays[0]->displayDigit((temp /  10) % 10);
+                        sevenSegmentDisplays[1]->displayDigit((temp / 100) % 10);
+                    }
                 }
-            }
-            
+            }   
         }
 
         // Wert von Feuchtigkeit an die Anzeige übergeben
@@ -289,4 +294,17 @@ class UpdateDisplay {
                 myLedStrip->clearSingleLED(i); // LED wieder ausschalten
             } 
         }
+
+        // Testen der Zeitanzeige
+        void textUhrTest(){
+            for(int hour = 0; hour <= 12; hour++){
+                for(int min = 0; min < 60; min = min + 5){
+                    updateTime(hour, min);
+                    delay(1000);
+                }
+            }
+        }
+
+    private:
+        float lastTemp;
 };

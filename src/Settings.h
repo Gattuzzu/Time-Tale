@@ -30,3 +30,6 @@
 
 // Sensor Konfiguration
 #define SENSOR_UPDATE_CYCLE 1000 // 1 Sekunde
+#define SENSOR_TIME_SHOW_INDOOR 10000 // 10 Sekunde
+#define SENSOR_TIME_SHOW_OUTDOOR 5000 // 10 Sekunde
+#define SENSOR_TEMPERATUR_CORRECTION -2 // 2°C Nach unten korrigieren

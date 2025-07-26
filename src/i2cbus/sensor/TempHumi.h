@@ -1,4 +1,5 @@
 #include <Wire.h> // Arduino I2C Bibliothek
+#include <Settings.h>
 
 #define SHT30_DEFAULT_ADDRESS 0x44 // Standard-I2C-Adresse für den SHT30 Sensor
                                    // Alternativ 0x45, je nach ADDR-Pin-Konfiguration
@@ -69,7 +70,7 @@ public:
 
         // Berechne Temperatur in °C
         temperature = -45.0f + 175.0f * ((float)tempRaw / 65535.0f);
-        temperature -= 1; // Korrektur, da er etwas zu warm misst
+        temperature += SENSOR_TEMPERATUR_CORRECTION; // Korrektur, da er etwas zu warm misst
 
         // Berechne relative Feuchtigkeit in %
         humidity = 100.0f * ((float)humidityRaw / 65535.0f);
