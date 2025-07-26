@@ -83,31 +83,31 @@ class UpdateDisplay {
             // Farben definieren
             uint8_t r, g, b;
 
-            if (airQuality <= 20.0) {
-                // IAQ von 0 bis 20: Immer Rot
+            if (airQuality <= 50.0) {
+                // IAQ von 0 bis 50: Immer Rot
                 r = 255;
                 g = 0;
                 b = 0;
 
-            } else if (airQuality >= 90.0) {
-                // IAQ von 90 bis 100: Immer Grün
+            } else if (airQuality >= 96.0) {
+                // IAQ von 96 bis 100: Immer Grün
                 r = 0;
                 g = 255;
                 b = 0;
 
-            } else if (airQuality <= 55.0) { // Angepasster Mittelpunkt für den Gelb-Übergang
-                // IAQ von 20 bis 60: Rot nach Gelb
-                // IAQ 20  -> Rot (255, 0, 0)
-                // IAQ 55  -> Gelb (255, 255, 0)
+            } else if (airQuality <= 73.0) { // Angepasster Mittelpunkt für den Gelb-Übergang
+                // IAQ von 50 bis 73: Rot nach Gelb
+                // IAQ 50  -> Rot (255, 0, 0)
+                // IAQ 73  -> Gelb (255, 255, 0)
                 r = 255;
-                g = (uint8_t)map(airQuality, 20, 55, 0, 255);
+                g = (uint8_t)map(airQuality, 50, 73, 0, 255);
                 b = 0;
 
             } else {
-                // IAQ von 60 bis 100: Gelb nach Grün
-                // IAQ 55  -> Gelb (255, 255, 0)
-                // IAQ 90 -> Grün (0, 255, 0)
-                r = (uint8_t)map(airQuality, 55, 90, 255, 0);
+                // IAQ von 73 bis 96: Gelb nach Grün
+                // IAQ 73  -> Gelb (255, 255, 0)
+                // IAQ 96 -> Grün (0, 255, 0)
+                r = (uint8_t)map(airQuality, 73, 96, 255, 0);
                 g = 255;
                 b = 0;
             }
