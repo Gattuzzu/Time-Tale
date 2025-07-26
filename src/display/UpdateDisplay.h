@@ -5,6 +5,7 @@
 #include "i2cbus/seven_segment/SevenSegmentDisplay.h"
 
 #include "led/led_strip/LedStrip.h"
+#include <mp3player/Mp3Player.h>
 
 // Sieben Segment Anzeigen
 SevenSegmentDisplay* sevenSegmentDisplays[5]; 
@@ -12,6 +13,9 @@ const uint8_t PCF_ADDRESSES[5] = {0x20, 0x21, 0x22, 0x23, 0x24};
 
 // LED
 LedStrip* myLedStrip;
+
+// Mp3Player
+Mp3Player myMp3Player;
 
 // Variablen
 float lastTemp = 0;
@@ -251,6 +255,11 @@ class UpdateDisplay {
             else if (hour == 10)     myLedStrip->setGroupLEDs(101, 4, r, g, b);  // ZÄNI
             else if (hour == 11)     myLedStrip->setGroupLEDs(106, 4, r, g, b);  // EUFI
             else if (hour == 12)     myLedStrip->setGroupLEDs(115, 6, r, g, b);  // ZWÖUFI
+
+            // Soundausgabe
+            if (min == 0) {
+                myMp3Player.play(hour);
+            }
    
         }
 
