@@ -1,8 +1,8 @@
 #include "Mp3Player.h"
 
 // Definitionen für die seriellen Pins (anpassen falls nötig)
-#define MP3_RX_PIN 10
-#define MP3_TX_PIN 11
+#define MP3_RX_PIN D3
+#define MP3_TX_PIN D2
 
 Mp3Player::Mp3Player() {
     // Der Konstruktor ist leer, die Initialisierung passiert in begin()
@@ -29,7 +29,7 @@ bool Mp3Player::begin(HardwareSerial& serialPort) {
 
 void Mp3Player::play(int trackNumber) {
     // Spielt einen bestimmten Track aus dem /mp3 Ordner
-    myDFPlayer.playMp3Folder(trackNumber);
+    myDFPlayer.play(trackNumber);
 }
 
 // void Mp3Player::pause() {

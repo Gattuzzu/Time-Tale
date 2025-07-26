@@ -347,10 +347,10 @@ class UpdateDisplay {
         }
 
         // Testen der Zeitanzeige
-        void textUhrTest(){
+        void textUhrTest(boolean enableSound){
             for(int hour = 0; hour <= 12; hour++){
                 for(int min = 0; min < 60; min = min + 5){
-                    updateTime(hour, min);
+                    updateTime(hour, min, enableSound);
                     delay(1000);
                 }
             }

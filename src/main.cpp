@@ -457,7 +457,7 @@ void loop() {
 
       // --- Dein normaler Betriebs-Code, der nur bei bestehender WLAN-Verbindung läuft ---
       NTPTimeSync::getInstance().update(); // Zeit aktualisieren
-      updateDisplay->updateTime(NTPTimeSync::getInstance().getHour(), NTPTimeSync::getInstance().getMin());
+      updateDisplay->updateTime(NTPTimeSync::getInstance().getHour(), NTPTimeSync::getInstance().getMin(), currentDeviceConfig.volume > 0); // Den Song nur Abspielen, wenn die Lautstärke > 0 ist.
 
       updateWeatherApi(lastApiCallWeather);
       updatePollenApi(lastApiCallPollen);
