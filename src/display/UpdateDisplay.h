@@ -166,11 +166,17 @@ class UpdateDisplay {
 
         // Wert der Pollen an die Anzeige übergeben.
         void updatePollen(int maxPollenLevel) {
-            int r, g, b; 
-            r = map(maxPollenLevel, 0, 5, 0, 255); // Rotanteil steigt von 0 (Grün) auf 255 (Rot)
-            g = map(maxPollenLevel, 0, 5, 255, 0); // Grünanteil sinkt von 255 (Grün) auf 0 (Rot)
-            b = 0;                                 // Blau ist immer 0
-            myLedStrip->setGroupLEDs(9, 3, r, g, b);
+            if(maxPollenLevel >= 0 || maxPollenLevel <= 5){
+
+                int r, g, b; 
+                r = map(maxPollenLevel, 0, 5, 0, 255); // Rotanteil steigt von 0 (Grün) auf 255 (Rot)
+                g = map(maxPollenLevel, 0, 5, 255, 0); // Grünanteil sinkt von 255 (Grün) auf 0 (Rot)
+                b = 0;                                 // Blau ist immer 0
+                myLedStrip->setGroupLEDs(9, 3, r, g, b);
+
+            } else{
+                myLedStrip->clearGroupLEDs(9, 3);
+            }
         }
 
         // Wert der Zeit an die Anzeige übergeben.
