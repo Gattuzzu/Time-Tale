@@ -285,6 +285,28 @@ class UpdateDisplay {
                 myLedStrip->setSingleLED(8, 255, 0, 0);
             }
         }
+        
+        // Menu anzeigen
+        void showMenu(){
+            myLedStrip->clearAll();
+            myLedStrip->setGroupLEDs(112, 4, displayColorTime.r, displayColorTime.g, displayColorTime.b);
+        }
+
+        // Aktueller Menu Punkt anzeigen
+        void showActMenuPoint(int menuPoint){
+            myLedStrip->clearSingleLED(8);
+            sevenSegmentDisplays[3]->displayDigit(menuPoint);
+            sevenSegmentDisplays[4]->allSegmentsOff();
+        }
+
+        // IP-Adresse anzeigen
+        // Die IP Adresse muss in teilen zu je 3 Digits übergeben werden.
+        void showIPAddress(int ipAddressPart, boolean showPoint = true){
+            myLedStrip->clearSingleLED(1);
+            sevenSegmentDisplays[0]->displayDigit( ipAddressPart        % 10);
+            sevenSegmentDisplays[1]->displayDigit((ipAddressPart / 10)  % 10);
+            sevenSegmentDisplays[2]->displayDigit((ipAddressPart / 100) % 10, showPoint);
+        }
 
         // Testen der Sieben Segment Anzeige
         void sevenSegmentTest(SevenSegmentDisplay displays){
