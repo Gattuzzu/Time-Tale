@@ -14,9 +14,6 @@ const uint8_t PCF_ADDRESSES[5] = {0x20, 0x21, 0x22, 0x23, 0x24};
 // LED
 LedStrip* myLedStrip;
 
-// Mp3Player
-Mp3Player myMp3Player;
-
 // Variablen
 float lastTemp = 0;
 CRGB displayColorTime = CRGB::Blue;
@@ -362,13 +359,13 @@ class UpdateDisplay {
         //
         void playSound(int hour, boolean enable = true) {
             if(enable){
-                myMp3Player.play(hour);
+                Mp3Player::getInstance().play(hour);
             }
         }
 
         //
         void updateVolume(int volume) {
-            myMp3Player.setVolume(volume);
+            Mp3Player::getInstance().setVolume(volume);
         }
 
 };
