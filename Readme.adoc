@@ -11,3 +11,10 @@ Um das Zertifikat zu erhalten, bzw. das Zertifikat soweit anzupassen, damit es f
 
 * https://forum.arduino.cc/t/arduino-uno-r4-wifi-ssl-will-not-connect-to-api-netatmo-and-others/1254103/2[Arduino UNO R4 Wifi SSL will not connect to api.netatmo and others]
 * https://unreeeal.github.io/ssl_esp.html[Convert SSL Certificate to Arduino ESP Variable]
+
+
+### MP3-Player
+
+Der MP3-Player spielt die Musik nicht anhand der der Namen von der Dateien ab. Dies ist nur eine Hilfe.
+Er spielt die Songs anhand der Reihenfolge ab, wie sie auf die SD-Karte kopiert wurden.
+Somit muss man alle Songs einzeln in der richtigen Reihenfolge auf die SD-Karte kopieren.
