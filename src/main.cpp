@@ -314,6 +314,7 @@ void applyDeviceSettings() {
     // Lautstärke einstellen (wenn du einen DAC/Verstärker hast)
     // int mappedVolume = map(currentDeviceConfig.volume, 0, 30, 0, 255); // Beispiel-Mapping für 0-255 Bereich
     // analogWrite(DAC_PIN, mappedVolume); // Annahme: DAC_PIN ist definiert und für Lautstärke zuständig
+    updateDisplay->updateVolume(currentDeviceConfig.volume);
     Logger::log(LogLevel::Info, "Lautstärke auf " + String(currentDeviceConfig.volume) + " gesetzt.");
 
 }

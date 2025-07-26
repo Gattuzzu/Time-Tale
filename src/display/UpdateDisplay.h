@@ -21,6 +21,8 @@ Mp3Player myMp3Player;
 float lastTemp = 0;
 CRGB displayColorTime = CRGB::Blue;
 
+boolean songPlayed = false;
+
 class UpdateDisplay {
     public:
         // Wert von Temperatur an die Anzeige übergeben.
@@ -183,7 +185,7 @@ class UpdateDisplay {
         }
 
         // Wert der Zeit an die Anzeige übergeben.
-        void updateTime(int hour, int min) {
+        void updateTime(int hour, int min, boolean enableSound = true) {
 
             int r, g, b;
             r = displayColorTime.r;
@@ -257,10 +259,14 @@ class UpdateDisplay {
             else if (hour == 12)     myLedStrip->setGroupLEDs(115, 6, r, g, b);  // ZWÖUFI
 
             // Soundausgabe
-            if (min == 0) {
-                myMp3Player.play(hour);
+            if (min == 0 && songPlayed == false) {
+                playSound(hour, enableSound);
+                songPlayed = true;
             }
-   
+            else if (min > 0) {
+                songPlayed = false;
+            }
+            
         }
 
         // Farbe der Zeitanzeige einstellen
@@ -351,6 +357,18 @@ class UpdateDisplay {
                     delay(1000);
                 }
             }
+        }
+
+        //
+        void playSound(int hour, boolean enable = true) {
+            if(enable){
+                myMp3Player.play(hour);
+            }
+        }
+
+        //
+        void updateVolume(int volume) {
+            myMp3Player.setVolume(volume);
         }
 
 };
