@@ -13,13 +13,12 @@ const uint8_t PCF_ADDRESSES[5] = {0x20, 0x21, 0x22, 0x23, 0x24};
 // LED
 LedStrip* myLedStrip;
 
+// Variablen
+float lastTemp = 0;
+CRGB displayColorTime = CRGB::Blue;
+
 class UpdateDisplay {
     public:
-        // Konstruktor
-        UpdateDisplay() : lastTemp(0.0f){
-
-        }
-
         // Wert von Temperatur an die Anzeige übergeben.
         void updateTemperature(float temperature) {
             if(abs(lastTemp - temperature) > 0.1){
@@ -183,9 +182,9 @@ class UpdateDisplay {
         void updateTime(int hour, int min) {
 
             int r, g, b;
-            r = 0;
-            g = 0;
-            b = 255;
+            r = displayColorTime.r;
+            g = displayColorTime.g;
+            b = displayColorTime.b;
 
             // Alle LEDs erst Lichter ausstellen
             myLedStrip->clearGroupLEDs(12, 111, false);
@@ -254,6 +253,18 @@ class UpdateDisplay {
             else if (hour == 12)     myLedStrip->setGroupLEDs(115, 6, r, g, b);  // ZWÖUFI
    
         }
+
+        // Farbe der Zeitanzeige einstellen
+        void setColorTime(int r, int g, int b){
+            displayColorTime = CRGB(r, g, b);
+        }
+
+        // Helligkeit alles LED einstellen
+        // Erwartet Wert von 0-100 und mappt ihn nach 0-255 um
+        void setBrightness(int brightness){
+            brightness = map(brightness, 0, 100, 0, 255);
+            myLedStrip->setBrightness(brightness);
+        }
         
         //
         void updateTempLED(boolean isIndoor) {
@@ -311,6 +322,4 @@ class UpdateDisplay {
             }
         }
 
-    private:
-        float lastTemp;
 };

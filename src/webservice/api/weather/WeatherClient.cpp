@@ -1,6 +1,5 @@
 #include "WeatherClient.h"
 #include "WeatherData.h" // Benötigt die vollständige Definition von WeatherData
-#include <Secrets.h>
 
 // Implementierung von getCurrentConditions
 bool WeatherClient::getCurrentConditions(float latitude, float longitude, WeatherData& outWeatherData) {

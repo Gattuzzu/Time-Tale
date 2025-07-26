@@ -42,7 +42,6 @@ public:
     // Konstruktor: Initialisiert den LED-Streifen
     LedStrip(int pin, int numLeds) {
         FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, numLeds);
-        FastLED.setBrightness(LED_BRIGHTNES); // Standardhelligkeit, kann angepasst werden
         clearAll(); // Alle LEDs beim Start ausschalten
     }
 
@@ -90,5 +89,10 @@ public:
     void clearAll() {
         FastLED.clear();
         FastLED.show();
+    }
+
+    // Erwartet eine Helligkeit von 0-255
+    void setBrightness(int brightness){
+        FastLED.setBrightness(brightness);
     }
 };
