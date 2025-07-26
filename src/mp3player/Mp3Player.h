@@ -6,8 +6,11 @@
 
 class Mp3Player {
 public:
-    // Konstruktor
-    Mp3Player();
+    // Statische Methode als einziger Zugriffspunkt
+    static Mp3Player& getInstance() {
+        static Mp3Player instance; // Wird nur einmal erstellt
+        return instance;
+    }
 
     // Initialisiert den Player mit einem seriellen Port
     bool begin(HardwareSerial& serialPort);
@@ -24,6 +27,13 @@ public:
     void setVolume(int volume);
 
 private:
+    // Konstruktor
+    Mp3Player();
+
+    // Verhindert das Kopieren der Instanz
+    Mp3Player(const Mp3Player&) = delete;
+    Mp3Player& operator=(const Mp3Player&) = delete;
+
     // Ein internes Objekt der eigentlichen DFPlayer-Bibliothek
     DFRobotDFPlayerMini myDFPlayer;
 

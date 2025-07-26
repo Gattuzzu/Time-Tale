@@ -69,6 +69,9 @@ void setup() {
   Logger::log(LogLevel::Info, "Programm gestartet und Logger initialisiert.");
   Serial.println("Hallo vom Setup");
 
+  // Mp3Player initialisieren
+  Mp3Player::getInstance().begin(Serial1);
+
   // Display Initialisieren
   updateDisplay = new UpdateDisplay();
 
