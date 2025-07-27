@@ -57,6 +57,13 @@ class UpdateDisplay {
             }   
         }
 
+        // Ausschalten aller 7-Segment Anzeige der Temperatur Anzeige
+        void clearTemperature(){
+            sevenSegmentDisplays[0]->allSegmentsOff();
+            sevenSegmentDisplays[1]->allSegmentsOff();
+            sevenSegmentDisplays[2]->allSegmentsOff();
+        }
+
         // Wert von Feuchtigkeit an die Anzeige übergeben
         void updateHumidity(float humidity) {
             
@@ -182,7 +189,8 @@ class UpdateDisplay {
         }
 
         // Wert der Zeit an die Anzeige übergeben.
-        void updateTime(int hour, int min, boolean enableSound = true) {
+        // callFromMenu wird nur dann verwendet um die Zeitverschiebung einzustellen.
+        void updateTime(int hour, int min, boolean enableSound = true, boolean callFromMenu = false) {
 
             int r, g, b;
             r = displayColorTime.r;
@@ -190,26 +198,35 @@ class UpdateDisplay {
             b = displayColorTime.b;
 
             // Alle LEDs erst Lichter ausstellen
-            myLedStrip->clearGroupLEDs(12, 111, false);
-            // ES ISCH
-            myLedStrip->setGroupLEDs(21, 2, r, g, b, false); // ES
-            myLedStrip->setGroupLEDs(16, 4, r, g, b, false); // ISCH
+            if (callFromMenu){
+                // Die Anzeige vom Menu nicht löschen
+                myLedStrip->clearGroupLEDs(12, 99, false);
+                myLedStrip->clearGroupLEDs(115, 7, false); 
+            } else{
+                myLedStrip->clearGroupLEDs(12, 111, false);
+            }
 
-            // Minuten in fünfer Schritten anzeigen
-            if ((min >= 5 && min <= 9) || (min >= 25 && min <= 29) || (min >= 35 && min <= 39) || (min >= 55 && min <= 59)) {
-                myLedStrip->setGroupLEDs(12, 3, r, g, b, false);                       // FÜF
-            }
-            else if ((min >= 10 && min <= 14) || (min >= 50 && min <= 54)) {
-                myLedStrip->setGroupLEDs(23, 3, r, g, b, false);                       // ZÄÄ
-            }
-            else if ((min >= 15 && min <= 19) || (min >= 45 && min <= 49)) {
-                myLedStrip->setGroupLEDs(27, 6, r, g, b, false);                       // VIERTU
-            }
-            else if ((min >= 20 && min <= 24) || (min >= 40 && min <= 44)) {
-                myLedStrip->setGroupLEDs(38, 6, r, g, b, false);                       // ZWÄNZG
-            }
-            if (min >= 25 && min <= 39) {
-                myLedStrip->setGroupLEDs(50, 5, r, g, b, false);                       // HAUBI
+            if (!callFromMenu){
+                // ES ISCH
+                myLedStrip->setGroupLEDs(21, 2, r, g, b, false); // ES
+                myLedStrip->setGroupLEDs(16, 4, r, g, b, false); // ISCH
+                
+                // Minuten in fünfer Schritten anzeigen
+                if ((min >= 5 && min <= 9) || (min >= 25 && min <= 29) || (min >= 35 && min <= 39) || (min >= 55 && min <= 59)) {
+                    myLedStrip->setGroupLEDs(12, 3, r, g, b, false);                       // FÜF
+                }
+                else if ((min >= 10 && min <= 14) || (min >= 50 && min <= 54)) {
+                    myLedStrip->setGroupLEDs(23, 3, r, g, b, false);                       // ZÄÄ
+                }
+                else if ((min >= 15 && min <= 19) || (min >= 45 && min <= 49)) {
+                    myLedStrip->setGroupLEDs(27, 6, r, g, b, false);                       // VIERTU
+                }
+                else if ((min >= 20 && min <= 24) || (min >= 40 && min <= 44)) {
+                    myLedStrip->setGroupLEDs(38, 6, r, g, b, false);                       // ZWÄNZG
+                }
+                if (min >= 25 && min <= 39) {
+                    myLedStrip->setGroupLEDs(50, 5, r, g, b, false);                       // HAUBI
+                }
             }
             
 
@@ -226,20 +243,22 @@ class UpdateDisplay {
             
             
             //Stunden anzeigen
+            if (!callFromMenu){
 
-            // Ab der 25. Minute wird die nachfolgende Stunde angezeigt ( z.B. 6:35 ist FÜF AB HALBI SIBNI)
-            if (min >= 25) {
-                hour += 1;
-            }
-
-            // Wir zeigen die Stunden 1 - 12 an, deshalb für alle zahlen ab 13 werden -12
-            if (hour > 12) {
-                hour -= 12;
-            }
-
-            // 0 Uhr wird als 12 Uhr angezeigt
-            if (hour == 0) {
-                hour += 12;
+                // Ab der 25. Minute wird die nachfolgende Stunde angezeigt ( z.B. 6:35 ist FÜF AB HALBI SIBNI)
+                if (min >= 25) {
+                    hour += 1;
+                }
+                
+                // Wir zeigen die Stunden 1 - 12 an, deshalb für alle zahlen ab 13 werden -12
+                if (hour > 12) {
+                    hour -= 12;
+                }
+                
+                // 0 Uhr wird als 12 Uhr angezeigt
+                if (hour == 0) {
+                    hour += 12;
+                }
             }
 
             if      (hour == 1)      myLedStrip->setGroupLEDs(59, 3, r, g, b);   // EIS
@@ -299,9 +318,30 @@ class UpdateDisplay {
         }
         
         // Menu anzeigen
-        void showMenu(){
-            myLedStrip->clearAll();
-            myLedStrip->setGroupLEDs(112, 4, displayColorTime.r, displayColorTime.g, displayColorTime.b);
+        void showMenu(boolean showMax = false){
+            // Die Anzeige vom Menu nicht löschen
+            myLedStrip->clearGroupLEDs(12, 99, false);
+            myLedStrip->clearGroupLEDs(115, 7, false); 
+
+            if (showMax){
+                // Falls die Helligkeit zu niedrig ist, für das Max erreicht anzuzeigen etwas erhöhen
+                int actBrightness = myLedStrip->getBrightness();
+                if (actBrightness < 50){
+                    myLedStrip->setBrightness(50);
+                }
+                if (displayColorTime.r >= 200 && displayColorTime.g <= 50 && displayColorTime.b <= 50){
+                    // Rot ist zu nahe an der eingestellten Farbe, deshalb soll die das Menu Weiss aufblinken
+                    myLedStrip->setGroupLEDs(111, 4, 255, 255, 255);
+                } else{
+                    // Das Menu soll Rot aufblinken
+                    
+                    myLedStrip->setGroupLEDs(111, 4, 255, 0, 0);
+                }
+                delay(200);
+                // Ursprüngliche Helligkeit wieder aktivieren
+                myLedStrip->setBrightness(actBrightness);
+            }
+            myLedStrip->setGroupLEDs(111, 4, displayColorTime.r, displayColorTime.g, displayColorTime.b);
         }
 
         // Aktueller Menu Punkt anzeigen
@@ -315,9 +355,9 @@ class UpdateDisplay {
         // Die IP Adresse muss in teilen zu je 3 Digits übergeben werden.
         void showIPAddress(int ipAddressPart, boolean showPoint = true){
             myLedStrip->clearSingleLED(1);
-            sevenSegmentDisplays[0]->displayDigit( ipAddressPart        % 10);
+            sevenSegmentDisplays[0]->displayDigit( ipAddressPart        % 10, showPoint);
             sevenSegmentDisplays[1]->displayDigit((ipAddressPart / 10)  % 10);
-            sevenSegmentDisplays[2]->displayDigit((ipAddressPart / 100) % 10, showPoint);
+            sevenSegmentDisplays[2]->displayDigit((ipAddressPart / 100) % 10);
         }
 
         // Testen der Sieben Segment Anzeige

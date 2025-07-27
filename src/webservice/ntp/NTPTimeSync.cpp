@@ -44,6 +44,11 @@ void NTPTimeSync::update() {
   }
 }
 
+void NTPTimeSync::setTimeOffset(long timeOffset){
+  _NtpClient.setTimeOffset(timeOffset);
+  _timeOffset = timeOffset;
+}
+
 // Implementierung der getFormattedTime() Methode (unverändert)
 String NTPTimeSync::getFormattedTime() {
   return _NtpClient.getFormattedTime();

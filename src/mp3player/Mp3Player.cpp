@@ -1,4 +1,5 @@
 #include "Mp3Player.h"
+#include "logger/Logger.h"
 
 // Definitionen für die seriellen Pins (anpassen falls nötig)
 #define MP3_RX_PIN D3
@@ -13,16 +14,14 @@ bool Mp3Player::begin(HardwareSerial& serialPort) {
     // Starte die serielle Kommunikation zum DFPlayer
     mp3Serial->begin(9600, SERIAL_8N1, MP3_RX_PIN, MP3_TX_PIN);
 
-    Serial.println("Initialisiere DFPlayer Mini ...");
+    Logger::log(LogLevel::Info, "Initialisiere DFPlayer Mini ...");
 
     // Initialisiere die Bibliothek
     if (!myDFPlayer.begin(*mp3Serial)) {
-        Serial.println("Verbindung zum DFPlayer Mini fehlgeschlagen!");
-        Serial.println("1. Bitte Verkabelung prüfen.");
-        Serial.println("2. Bitte SD-Karte einlegen und formatieren.");
+        Logger::log(LogLevel::Error, "Verbindung zum DFPlayer Mini fehlgeschlagen!\n1. Bitte Verkabelung prüfen.\n2. Bitte SD-Karte einlegen und formatieren.");
         return false;
     }
-    Serial.println("DFPlayer Mini bereit.");
+    Logger::log(LogLevel::Info, "DFPlayer Mini bereit.");
 
     return true;
 }

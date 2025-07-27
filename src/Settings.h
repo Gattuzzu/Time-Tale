@@ -2,6 +2,10 @@
 #define AP_SSID "Time-Tale"
 #define AP_PASSWORD "Time-Tale"
 
+// Menu
+#define IP_ADDRESS_SHOW_CYCLE 1000 // 1 Sekunde
+#define MENU_OPEN_TIME 8000 // 10 Sekunden
+
 // NTP Konfiguration
 #define UPDATE_INTERVALL 60000 // 1 Minute
 

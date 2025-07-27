@@ -154,11 +154,11 @@ const char PROGMEM INDEX_HTML_TEMPLATE[] = R"rawliteral(
                 <option value="0x00FF00" %COLOR_00FF00_SELECTED%>Grün</option>
                 <option value="0x0000FF" %COLOR_0000FF_SELECTED%>Blau</option>
                 <option value="0xFFFFFF" %COLOR_FFFFFF_SELECTED%>Weiss</option>
-                <option value="0xFFA500" %COLOR_FFA500_SELECTED%>Orange</option>
-                <option value="0x800080" %COLOR_800080_SELECTED%>Lila</option>
+                <option value="0xF94D00" %COLOR_F94D00_SELECTED%>Orange</option>
+                <option value="0x7F00FF" %COLOR_7F00FF_SELECTED%>Lila</option>
                 <option value="0x00FFFF" %COLOR_00FFFF_SELECTED%>Cyan</option>
                 <option value="0xFFFF00" %COLOR_FFFF00_SELECTED%>Gelb</option>
-                <option value="0xFFC0CB" %COLOR_FFC0CB_SELECTED%>Pink</option>
+                <option value="0xFF007F" %COLOR_FF007F_SELECTED%>Pink</option>
             </select><br>
 
             <label for="ledBrightness">LED Helligkeit (0-100): <span id="ledBrightnessValue">%LEDBRIGHTNESS%</span></label>
@@ -314,7 +314,12 @@ void ConfigurationPortal::handleRoot() {
     html.replace("%VOLUME%", String(currentConfig.volume));
 
     // Setze das "selected"-Attribut für die aktuell gespeicherte Farbe
-    String selectedColorHex = "0x" + String(currentConfig.textColorCRGB, HEX);
+    String colorAsString = String(currentConfig.textColorCRGB, HEX);
+    while (colorAsString.length() < 6){
+        colorAsString = "0" + colorAsString; // Mit Führenden 0 auffüllen.
+    }
+
+    String selectedColorHex = "0x" + colorAsString;
     selectedColorHex.toUpperCase(); // Sicherstellen, dass die Hex-Zeichen Grossbuchstaben sind
     
     // Vergleiche und setze das "selected"-Attribut entsprechend
@@ -322,11 +327,11 @@ void ConfigurationPortal::handleRoot() {
     else if (selectedColorHex == "0X00FF00") html.replace("%COLOR_00FF00_SELECTED%", "selected");
     else if (selectedColorHex == "0X0000FF") html.replace("%COLOR_0000FF_SELECTED%", "selected");
     else if (selectedColorHex == "0XFFFFFF") html.replace("%COLOR_FFFFFF_SELECTED%", "selected");
-    else if (selectedColorHex == "0XFFA500") html.replace("%COLOR_FFA500_SELECTED%", "selected");
-    else if (selectedColorHex == "0X800080") html.replace("%COLOR_800080_SELECTED%", "selected");
+    else if (selectedColorHex == "0XF94D00") html.replace("%COLOR_F94D00_SELECTED%", "selected");
+    else if (selectedColorHex == "0X7F00FF") html.replace("%COLOR_7F00FF_SELECTED%", "selected");
     else if (selectedColorHex == "0X00FFFF") html.replace("%COLOR_00FFFF_SELECTED%", "selected");
     else if (selectedColorHex == "0XFFFF00") html.replace("%COLOR_FFFF00_SELECTED%", "selected");
-    else if (selectedColorHex == "0XFFC0CB") html.replace("%COLOR_FFC0CB_SELECTED%", "selected");
+    else if (selectedColorHex == "0XFF007F") html.replace("%COLOR_FF007F_SELECTED%", "selected");
     else html.replace("%COLOR_FFFFFF_SELECTED%", "selected"); // Fallback zu Weiss, falls unbekannte Farbe
     
     // Logik für die Auswahl der Textfarbe im Dropdown-Menü
@@ -335,11 +340,11 @@ void ConfigurationPortal::handleRoot() {
     html.replace("%COLOR_00FF00_SELECTED%", "");
     html.replace("%COLOR_0000FF_SELECTED%", "");
     html.replace("%COLOR_FFFFFF_SELECTED%", "");
-    html.replace("%COLOR_FFA500_SELECTED%", "");
-    html.replace("%COLOR_800080_SELECTED%", "");
+    html.replace("%COLOR_F94D00_SELECTED%", "");
+    html.replace("%COLOR_7F00FF_SELECTED%", "");
     html.replace("%COLOR_00FFFF_SELECTED%", "");
     html.replace("%COLOR_FFFF00_SELECTED%", "");
-    html.replace("%COLOR_FFC0CB_SELECTED%", "");
+    html.replace("%COLOR_FF007F_SELECTED%", "");
     html.replace("%COLOR_000000_SELECTED%", "");
 
     _server.send(200, "text/html", html); // Sende die generierte HTML-Seite an den Client

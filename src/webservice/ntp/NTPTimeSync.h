@@ -19,6 +19,7 @@ public:
   bool begin();
 
   void update();
+  void setTimeOffset(long timeOffset);
   String getFormattedTime();
   time_t getEpochTime();
 

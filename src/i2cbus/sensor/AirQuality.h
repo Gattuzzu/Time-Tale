@@ -15,7 +15,7 @@ public:
     // Initialisiert den Sensor
     bool begin() {
         if (!bme.begin(_i2cAddress)) {
-            Serial.println("Konnte BME680 nicht finden. Überprüfen Sie die Verkabelung und Adresse!");
+            Logger::log(LogLevel::Error, "Konnte BME680 nicht finden. Überprüfen Sie die Verkabelung und Adresse!");
             _initialized = false;
             return false;
         }
@@ -27,18 +27,18 @@ public:
         bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
         bme.setGasHeater(320, 150); // 320 C für 150 ms
         _initialized = true;
-        Serial.println("BME680 initialisiert.");
+        Logger::log(LogLevel::Info, "BME680 initialisiert.");
         return true;
     }
 
     // Liest alle Sensordaten und gibt true zurück, wenn erfolgreich
     bool readSensorData() {
         if (!_initialized) {
-            Serial.println("Sensor nicht initialisiert.");
+            Logger::log(LogLevel::Error, "Sensor nicht initialisiert.");
             return false;
         }
         if (!bme.performReading()) {
-            Serial.println("Fehler beim Auslesen des BME680 Sensors!");
+            Logger::log(LogLevel::Error, "Fehler beim Auslesen des BME680 Sensors!");
             return false;
         }
         return true;

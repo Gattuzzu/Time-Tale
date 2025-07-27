@@ -95,4 +95,9 @@ public:
     void setBrightness(int brightness){
         FastLED.setBrightness(brightness);
     }
+
+    // Gibt die Helligkeit von 0-255 zurück
+    int getBrightness(){
+        return FastLED.getBrightness();
+    }
 };

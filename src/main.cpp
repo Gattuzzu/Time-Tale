@@ -35,6 +35,14 @@ enum DeviceState {
 
 DeviceState currentState = STATE_INITIALIZING; // Startzustand
 
+// Menu ist aktiviert
+boolean menuIsActiv = false;
+int ipAddressIndex = 0;
+int menuPoint = 1;
+boolean buttonAisPressed = false;
+boolean buttonBisPressed = false;
+boolean buttonCisPressed = false;
+
 // Globale Konfigurationsinstanz, die alle Einstellungen enthält
 AppConfig currentDeviceConfig;
 
@@ -45,11 +53,15 @@ UpdateDisplay* updateDisplay;
 bool connectToWiFi(); // Keine Parameter mehr, nutzt currentDeviceConfig
 void onConfigSavedCallback(const AppConfig& config); // Callback für Portal
 void applyDeviceSettings(); // Funktion zum Anwenden der Einstellungen
-void updateSensorValues(unsigned long &lastApiCall, boolean forceUpdate = false); // Beibehalten
+void updateSensorValues(unsigned long &lastApiCall, boolean forceUpdate = false);
 void i2cBusScan(); // Beibehalten
 void initializeNetworkServices(); // Beibehalten
 void updateWeatherApi(unsigned long &lastApiCall, boolean forceUpdate = false); // Beibehalten
 void updatePollenApi(unsigned long &lastApiCall , boolean forceUpdate = false); // Beibehalten
+bool parseIpString(const String& ipString, std::vector<int>& octets);
+void showMenu(unsigned long &lastIPaddressChange, unsigned long &lastChangeFromUser);
+boolean isButtonPressed(int button);
+boolean buttonPressToImpuls(int button, boolean &buttonIsPressed);
 
 
 void setup() {
@@ -67,7 +79,6 @@ void setup() {
 
   Logger::setup(LOG_LEVEL); // Logger initialisieren (ohne NTP, da noch nicht verfügbar)
   Logger::log(LogLevel::Info, "Programm gestartet und Logger initialisiert.");
-  Serial.println("Hallo vom Setup");
 
   // Mp3Player initialisieren
   Mp3Player::getInstance().begin(Serial1);
@@ -131,40 +142,59 @@ void setup() {
   Logger::log(LogLevel::Info, "Ende vom Setup!");
 }
 
+boolean isButtonPressed(int button){
+  return !digitalRead(button);
+}
+
+// Wandelt den Button Druck in einen Impuls um
+boolean buttonPressToImpuls(int button, boolean &buttonIsPressed){
+  boolean isPressed = isButtonPressed(button);
+  if (isPressed && !buttonIsPressed){
+    buttonIsPressed = true;
+    return true;
+  } else if (!isPressed){
+    buttonIsPressed = false;
+  }
+  return false;
+}
+
 void updateSensorValues(unsigned long &lastApiCall, boolean forceUpdate){
-  if (forceUpdate || millis() - lastApiCall >= SENSOR_UPDATE_CYCLE ) {
-    lastApiCall = millis();
+  if (!menuIsActiv){
 
-    // Temperatur und Luftfeuchtigkeit
-    float actTemperature;
-    float actHumidity;
-    if (tempHumi->readData(actTemperature, actHumidity)) {
-      // Temperatur Anzeigen auf 7 Segment Anzeige
-      updateDisplay->updateTemperature(actTemperature);
-      updateDisplay->updateTempLED(true);
-
-      // Luftfeuchtigkeit Anzeigen auf 7 Segment Anzeige
-      updateDisplay->updateHumidity(actHumidity);
-      updateDisplay->updateHumiLED(true);
-
-    } else {
-      Logger::log(LogLevel::Error, "Fehler beim Lesen der SHT30(TempHumi) Daten.");
-    }
-
-    //Luftqualität
-    if (airQuality->readSensorData()) {
-      // Anzeigen der Luftqualität
-      float iaqValue = airQuality->getIAQ();
-      // Sicherstellen, dass der IAQ-Wert im gültigen Bereich liegt
-      if (iaqValue < 0.0) iaqValue = 0.0;
-      if (iaqValue > 100.0) iaqValue = 100.0;
-
-      // Farben definieren
-      updateDisplay->updateAirQuality(iaqValue);
-
-    }
-    else {
-      Logger::log(LogLevel::Error, "Fehler beim Lesen der Luftqualität Daten.");
+    if (forceUpdate || millis() - lastApiCall >= SENSOR_UPDATE_CYCLE ) {
+      lastApiCall = millis();
+      
+      // Temperatur und Luftfeuchtigkeit
+      float actTemperature;
+      float actHumidity;
+      if (tempHumi->readData(actTemperature, actHumidity)) {
+        // Temperatur Anzeigen auf 7 Segment Anzeige
+        updateDisplay->updateTemperature(actTemperature);
+        updateDisplay->updateTempLED(true);
+        
+        // Luftfeuchtigkeit Anzeigen auf 7 Segment Anzeige
+        updateDisplay->updateHumidity(actHumidity);
+        updateDisplay->updateHumiLED(true);
+        
+      } else {
+        Logger::log(LogLevel::Error, "Fehler beim Lesen der SHT30(TempHumi) Daten.");
+      }
+      
+      //Luftqualität
+      if (airQuality->readSensorData()) {
+        // Anzeigen der Luftqualität
+        float iaqValue = airQuality->getIAQ();
+        // Sicherstellen, dass der IAQ-Wert im gültigen Bereich liegt
+        if (iaqValue < 0.0) iaqValue = 0.0;
+        if (iaqValue > 100.0) iaqValue = 100.0;
+        
+        // Farben definieren
+        updateDisplay->updateAirQuality(iaqValue);
+        
+      }
+      else {
+        Logger::log(LogLevel::Error, "Fehler beim Lesen der Luftqualität Daten.");
+      }
     }
   }
 }
@@ -359,6 +389,236 @@ void updatePollenApi(unsigned long &lastApiCall , boolean forceUpdate){
     }
 }
 
+void showMenu(unsigned long &lastIPaddressChange, unsigned long &lastChangeFromUser){
+  // Button Zustänge auslesen
+  boolean buttonAimpuls = buttonPressToImpuls(BUTTON_A, buttonAisPressed);
+  boolean buttonBimpuls = buttonPressToImpuls(BUTTON_B, buttonBisPressed);
+  boolean buttonCimpuls = buttonPressToImpuls(BUTTON_C, buttonCisPressed);
+  boolean firstTimeOpenMenuPoint = false;
+
+  // Wurde irgen einer der Buttons betätigt soll die Zeit bis das Menu verlassen wird von vorne beginnen
+  if(buttonAimpuls || buttonBimpuls || buttonCimpuls){
+    lastChangeFromUser = millis();
+  }
+
+  if (!menuIsActiv && buttonBimpuls){
+    menuIsActiv = true;
+    firstTimeOpenMenuPoint = true;
+    buttonBimpuls = false; // Nach einmaliger Verwendung zurücksetzen
+  }
+
+  if (menuIsActiv){
+
+    // Menu Schriftpunkt anzeigen
+    // Aber nur beim ersten Mal um angezeigte Einstellungen nicht zu überschreiben
+    if (firstTimeOpenMenuPoint){
+      updateDisplay->showMenu();
+    }
+
+    // IP Adresse anzeigen
+    if (millis() - lastIPaddressChange >= IP_ADDRESS_SHOW_CYCLE) {
+      lastIPaddressChange = millis();
+      if (ipAddressIndex == 4){
+        updateDisplay->clearTemperature();
+        ipAddressIndex = 0;
+      } else{
+
+        std::vector<int> octets;
+        String ip;
+        if (currentState == STATE_AP_MODE){
+          ip = WiFi.softAPIP().toString();
+          
+        } else if (currentState == STATE_NORMAL_OPERATION) {
+          ip = WiFi.localIP().toString();
+        }
+        if (ip != nullptr && parseIpString(ip, octets)){
+          updateDisplay->showIPAddress(octets[ipAddressIndex], ipAddressIndex != 3);
+        }
+        ipAddressIndex++;
+      }
+    }
+
+    if (buttonBimpuls){
+      menuPoint++; // Wechseln zum nächsten Menu Punkt
+      if(menuPoint > 4){
+        menuPoint = 1;
+      }
+      firstTimeOpenMenuPoint = true;
+
+      buttonBimpuls = false; // Nach einmaliger Verwendung zurücksetzen
+    }
+
+    updateDisplay->showActMenuPoint(menuPoint);
+  
+    // Es darf nur ein Button gleichzeitig betätigt werden.
+    if(firstTimeOpenMenuPoint || ((buttonAimpuls || buttonCimpuls) && !(buttonAimpuls && buttonCimpuls))){
+      switch (menuPoint)
+      {
+        case 1:{ // Textfarbe der Uhr
+          const String colorAsHex[] = {"FF0000", "00FF00", "0000FF", "FFFFFF", "F94D00", "7F00FF", "00FFFF", "FFFF00", "FF007F"};
+          const int numColors = sizeof(colorAsHex) / sizeof(colorAsHex[0]); // Anzahl der Elemente im Array
+          String actColorAsString = String(currentDeviceConfig.textColorCRGB, HEX);
+          
+          while (actColorAsString.length() < 6){
+            actColorAsString = "0" + actColorAsString; // Mit Führenden 0 auffüllen.
+          }
+          
+          actColorAsString.toUpperCase();
+          int index = -1; // Standardmässig -1, falls nicht gefunden
+          for (int i = 0; i < numColors; i++) {
+            if (colorAsHex[i] == actColorAsString) {
+              index = i;
+              break;
+            }
+          }
+          
+          
+          if (buttonAimpuls){ index++; }
+          if (buttonCimpuls){ index--; }
+          
+          // Index korrigieren
+          if (index < 0)                    { index = numColors - 1; }
+          if (index >= numColors){ index = 0; }
+          
+          Logger::log(LogLevel::Info, "Color: " + String(currentDeviceConfig.textColorCRGB));
+          Logger::log(LogLevel::Info, "Index: " + String(index));
+
+          currentDeviceConfig.textColorCRGB = strtoul(colorAsHex[index].c_str(), NULL, 16);
+          ConfigurationPortal::getInstance().saveConfig(currentDeviceConfig); // Die Änderung speichern
+          
+          CRGB displayColor = CRGB(currentDeviceConfig.textColorCRGB);
+          updateDisplay->setColorTime(displayColor.r, displayColor.g, displayColor.b);
+          updateDisplay->showMenu(); // Um die Farbe zu updaten muss nochmals showMenu() aufgerufen werden.
+          break;
+        } 
+        
+        case 2:{ // Helligkeit der Led's
+          int brightness = currentDeviceConfig.ledBrightness;
+          
+          if (buttonAimpuls){ brightness += 5; }
+          if (buttonCimpuls){ brightness -= 5; }
+          
+          // Index korrigieren
+          boolean maxReached = false;
+          if (brightness <   0){ brightness =   0; maxReached = true; }
+          if (brightness > 100){ brightness = 100; maxReached = true; }
+          
+          Logger::log(LogLevel::Info, "Helligkeit: " + String(brightness));
+
+          currentDeviceConfig.ledBrightness = brightness;
+          ConfigurationPortal::getInstance().saveConfig(currentDeviceConfig); // Die Änderung speichern
+          
+          updateDisplay->setBrightness(currentDeviceConfig.ledBrightness);
+          updateDisplay->showMenu(maxReached); // Um die Helligkeit zu updaten muss nochmals showMenu() aufgerufen werden.
+          break;
+        }
+        
+        case 3:{ // Lautstärke der Uhr
+          int volume = currentDeviceConfig.volume;
+          
+          if (buttonAimpuls){ volume += 2; }
+          if (buttonCimpuls){ volume -= 2; }
+          
+          // Index korrigieren
+          boolean maxReached = false;
+          if (volume <  0){ volume =  0; maxReached = true; }
+          if (volume > 30){ volume = 30; maxReached = true; }
+          
+          Logger::log(LogLevel::Info, "Volume: " + String(volume));
+
+          currentDeviceConfig.volume = volume;
+          ConfigurationPortal::getInstance().saveConfig(currentDeviceConfig); // Die Änderung speichern
+          
+          updateDisplay->updateVolume(currentDeviceConfig.volume);
+          updateDisplay->playSound(NTPTimeSync::getInstance().getHour()); // Test Sound (Aktuelle Studen) abspielen
+          updateDisplay->showMenu(maxReached); // showMenu() aufrufen, um das erreichen vom Max anzuzeigen
+          break;
+        }
+
+        case 4:{ // Zeitverschiebung
+          int timeOffsetHours = currentDeviceConfig.timeOffsetHours;
+          Logger::log(LogLevel::Info, "Zeitverschiebung: " + String(timeOffsetHours));
+
+          if (buttonAimpuls){ timeOffsetHours += 1; }
+          if (buttonCimpuls){ timeOffsetHours -= 1; }
+
+          // Index korrigieren
+          if (timeOffsetHours < -12){ timeOffsetHours =  12; }
+          if (timeOffsetHours >  12){ timeOffsetHours = -12; }
+          
+          currentDeviceConfig.timeOffsetHours = timeOffsetHours;
+          ConfigurationPortal::getInstance().saveConfig(currentDeviceConfig); // Die Änderung speichern
+          updateDisplay->updateTime(abs(timeOffsetHours), timeOffsetHours <= 0 ? 55 : 5, false, true); // Die eingestellte Zeitverschiebung anzeigen
+          NTPTimeSync::getInstance().setTimeOffset(currentDeviceConfig.timeOffsetHours * 60 * 60);
+          NTPTimeSync::getInstance().update();
+          break;
+        }
+      }
+    }
+
+    // Menu wieder schliessen
+    if (millis() - lastChangeFromUser >= MENU_OPEN_TIME) {
+      // Variablen zurücksetzen:
+      menuPoint = 1;
+      ipAddressIndex = 0;
+
+      menuIsActiv = false;
+    }
+
+  }
+}
+
+bool parseIpString(const String& ipString, std::vector<int>& octets) {
+    // Temporärer Vektor für die parsed Oktette
+    std::vector<int> tempOctets;
+    tempOctets.reserve(4); // Reserviere Platz für 4 Elemente
+
+    int dot1 = ipString.indexOf('.');
+    int dot2 = ipString.indexOf('.', dot1 + 1);
+    int dot3 = ipString.indexOf('.', dot2 + 1);
+
+    if (dot1 == -1 || dot2 == -1 || dot3 == -1) {
+        // Nicht genügend Punkte gefunden, ungültiges IP-Format
+        Logger::log(LogLevel::Error, "Fehler: Ungültiges IP-Format (nicht genügend Punkte).");
+        return false;
+    }
+
+    // Extrahieren der Substrings für jedes Oktett
+    String sOctet1 = ipString.substring(0, dot1);
+    String sOctet2 = ipString.substring(dot1 + 1, dot2);
+    String sOctet3 = ipString.substring(dot2 + 1, dot3);
+    String sOctet4 = ipString.substring(dot3 + 1);
+
+    // Konvertieren der Substrings in Integer
+    int o1 = sOctet1.toInt();
+    int o2 = sOctet2.toInt();
+    int o3 = sOctet3.toInt();
+    int o4 = sOctet4.toInt();
+
+    // Zusätzliche Validierung:
+    // Überprüfen, ob die toInt()-Konvertierung erfolgreich war (nicht 0, wenn die Zeichen ungültig waren)
+    // und ob die Werte im gültigen Bereich (0-255) liegen.
+    if (sOctet1.length() == 0 || sOctet2.length() == 0 || sOctet3.length() == 0 || sOctet4.length() == 0 ||
+        o1 < 0 || o1 > 255 ||
+        o2 < 0 || o2 > 255 ||
+        o3 < 0 || o3 > 255 ||
+        o4 < 0 || o4 > 255) {
+        Logger::log(LogLevel::Error, "Fehler: Ungültige Oktett-Werte oder leere Oktette.");
+        return false;
+    }
+
+    // Wenn alle Prüfungen bestanden sind, füge die Oktette zum temporären Vektor hinzu
+    tempOctets.push_back(o1);
+    tempOctets.push_back(o2);
+    tempOctets.push_back(o3);
+    tempOctets.push_back(o4);
+
+    // Weise den temporären Vektor dem Referenzvektor zu
+    octets = tempOctets;
+
+    return true;
+}
+
 
 void loop() {
   // Muss immer in der loop() aufgerufen werden, damit der Webserver Anfragen verarbeiten kann.
@@ -371,42 +631,52 @@ void loop() {
   // Letzter API Aufruf
   static unsigned long lastApiCallWeather = 0;
   static unsigned long lastApiCallPollen = 0;
+
   // Sensoren
   static unsigned long lastSensorCall = 0;
   static unsigned long showDisplayValuesTimer = 0; // Umbenannt von showIndoorValues für Klarheit
   static boolean showingIndoor = true; // Umbenannt von showIndoor
+
+  // Menu 
+  static unsigned long lastIPAddressPart = 0;
+  static unsigned long lastMenuChangeFromUser = 0;
 
   // Logik für die Anzeige der Innen-/Aussentemperatur
   // Nutzt die konfigurierten Anzeigedauern
   unsigned long indoorDisplayTimeMs = (unsigned long)currentDeviceConfig.indoorTempDisplayTimeSec * 1000UL;
   unsigned long outdoorDisplayTimeMs = (unsigned long)currentDeviceConfig.outdoorTempDisplayTimeSec * 1000UL;
 
-  if (currentState == STATE_NORMAL_OPERATION) {
-    if (showingIndoor) {
-      updateSensorValues(lastSensorCall); // Zeigt Innentemperatur/Feuchtigkeit
-      if (millis() - showDisplayValuesTimer >= indoorDisplayTimeMs) {
-        showingIndoor = false;
-        showDisplayValuesTimer = millis(); // Timer für Aussentemperatur starten
+  // Menu Aufruf
+  showMenu(lastIPAddressPart, lastMenuChangeFromUser);
+
+  if (!menuIsActiv){
+    if (currentState == STATE_NORMAL_OPERATION) {
+      if (showingIndoor) {
+        updateSensorValues(lastSensorCall); // Zeigt Innentemperatur/Feuchtigkeit
+        if (millis() - showDisplayValuesTimer >= indoorDisplayTimeMs) {
+          showingIndoor = false;
+          showDisplayValuesTimer = millis(); // Timer für Aussentemperatur starten
+        }
+      } else {
+        // Zeigt Aussentemperatur/Wetterdaten
+        updateDisplay->updateWeather(currentWeatherData.weatherType);
+        updateDisplay->updateTemperature(currentWeatherData.temperature.degrees);
+        updateDisplay->updateTempLED(false); // Annahme: false bedeutet Aussentemp-LED
+        updateDisplay->updateHumidity(currentWeatherData.relativeHumidity);
+        updateDisplay->updateHumiLED(false); // Annahme: false bedeutet Aussentemp-LED
+        
+        if (millis() - showDisplayValuesTimer >= outdoorDisplayTimeMs) {
+          showingIndoor = true;
+          showDisplayValuesTimer = millis(); // Timer für Innentemperatur starten
+        }
       }
     } else {
-      // Zeigt Aussentemperatur/Wetterdaten
-      updateDisplay->updateWeather(currentWeatherData.weatherType);
-      updateDisplay->updateTemperature(currentWeatherData.temperature.degrees);
-      updateDisplay->updateTempLED(false); // Annahme: false bedeutet Aussentemp-LED
-      updateDisplay->updateHumidity(currentWeatherData.relativeHumidity);
-      updateDisplay->updateHumiLED(false); // Annahme: false bedeutet Aussentemp-LED
-
-      if (millis() - showDisplayValuesTimer >= outdoorDisplayTimeMs) {
-        showingIndoor = true;
-        showDisplayValuesTimer = millis(); // Timer für Innentemperatur starten
-      }
+      // Wenn nicht im Normalbetrieb, immer Innensensorwerte anzeigen oder nichts
+      updateSensorValues(lastSensorCall);
+      // Setze den Timer zurück, damit er beim Wechsel in NORMAL_OPERATION neu startet
+      showDisplayValuesTimer = millis();
+      showingIndoor = true;
     }
-  } else {
-    // Wenn nicht im Normalbetrieb, immer Innensensorwerte anzeigen oder nichts
-    updateSensorValues(lastSensorCall);
-    // Setze den Timer zurück, damit er beim Wechsel in NORMAL_OPERATION neu startet
-    showDisplayValuesTimer = millis();
-    showingIndoor = true;
   }
 
 
@@ -455,9 +725,11 @@ void loop() {
           break; // Sofortiger Wechsel des Zustands
       }
 
-      // --- Dein normaler Betriebs-Code, der nur bei bestehender WLAN-Verbindung läuft ---
-      NTPTimeSync::getInstance().update(); // Zeit aktualisieren
-      updateDisplay->updateTime(NTPTimeSync::getInstance().getHour(), NTPTimeSync::getInstance().getMin(), currentDeviceConfig.volume > 0); // Den Song nur Abspielen, wenn die Lautstärke > 0 ist.
+      if (!menuIsActiv){
+        // --- Dein normaler Betriebs-Code, der nur bei bestehender WLAN-Verbindung läuft ---
+        NTPTimeSync::getInstance().update(); // Zeit aktualisieren
+        updateDisplay->updateTime(NTPTimeSync::getInstance().getHour(), NTPTimeSync::getInstance().getMin(), currentDeviceConfig.volume > 0); // Den Song nur Abspielen, wenn die Lautstärke > 0 ist.
+      }
 
       updateWeatherApi(lastApiCallWeather);
       updatePollenApi(lastApiCallPollen);
