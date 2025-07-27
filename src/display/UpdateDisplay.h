@@ -73,7 +73,8 @@ class UpdateDisplay {
             Logger::log(LogLevel::Debug, "Feuchtigkeit: " + String(humidity, 2) + "%"); // 2 Nachkommastellen
 
             // Luftfeuchtigkeit Anzeigen auf 7 Segment Anzeige
-            int humi = humidity;
+            // Wenn die Luftfeuchtigkeit 100 ist, dann muss 99 angezeigt werden, da die beiden 7-Segment Anzeigen nciht mehr anzeigen können.
+            int humi = humidity >= 100 ? 99 : humidity; 
 
             sevenSegmentDisplays[3]->displayDigit(humi % 10);
 
