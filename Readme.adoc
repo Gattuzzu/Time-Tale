@@ -18,3 +18,10 @@ Um das Zertifikat zu erhalten, bzw. das Zertifikat soweit anzupassen, damit es f
 Der MP3-Player spielt die Musik nicht anhand der der Namen von der Dateien ab. Dies ist nur eine Hilfe.
 Er spielt die Songs anhand der Reihenfolge ab, wie sie auf die SD-Karte kopiert wurden.
 Somit muss man alle Songs einzeln in der richtigen Reihenfolge auf die SD-Karte kopieren.
+
+
+### W-Lan Verbindung
+
+Der Arduino Nano esp32 kann sich nur mit W-Lan im 2,4 GHz bereich verbinden.
+Somit muss darauf geachtet werden, dass das gewünschte W-Lan im 2,4 GHz Band zur verfügung steht.
+Auf meinem Handy (Galaxy A55) musste ich extra den Hotspot umstellen. 

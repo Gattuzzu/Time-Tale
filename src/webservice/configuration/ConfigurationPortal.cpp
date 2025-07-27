@@ -47,7 +47,7 @@ const char PROGMEM INDEX_HTML_TEMPLATE[] = R"rawliteral(
         h1 { color: #007bff; margin-bottom: 20px; }
         h2 { color: #007bff; margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
         label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
-        input[type="text"], input[type="password"], input[type="number"], select {
+        input[type="text"], input[type="password"], input[type="number"], input[type="tel"], select {
             width: calc(100% - 22px);
             padding: 10px;
             margin-bottom: 15px;
@@ -122,7 +122,7 @@ const char PROGMEM INDEX_HTML_TEMPLATE[] = R"rawliteral(
 
             <h2>Weitere Einstellungen</h2>
             <label for="timeOffset">Zeitverschiebung (Stunden, z.B. 1 für MEZ, 2 für MESZ):</label>
-            <input type="number" id="timeOffset" name="timeOffset" value="%TIMEOFFSET%"><br>
+            <input type="tel" id="timeOffset" name="timeOffset" value="%TIMEOFFSET%"><br>
 
             <label for="ntpServer">NTP Server (z.B. ntp.metas.ch):</label>
             <input type="text" id="ntpServer" name="ntpServer" value="%NTPSERVER%"><br>
@@ -137,10 +137,10 @@ const char PROGMEM INDEX_HTML_TEMPLATE[] = R"rawliteral(
             <input type="number" id="pollenUpdateInterval" name="pollenUpdateInterval" value="%POLLEN_INT%"><br>
 
             <label for="longitude">Längengrad (z.B. 7.4474 für Bern):</label>
-            <input type="number" step="any" id="longitude" name="longitude" value="%LONGITUDE%"><br>
+            <input type="tel" step="any" id="longitude" name="longitude" value="%LONGITUDE%"><br>
 
             <label for="latitude">Breitengrad (z.B. 46.9480 für Bern):</label>
-            <input type="number" step="any" id="latitude" name="latitude" value="%LATITUDE%"><br>
+            <input type="tel" step="any" id="latitude" name="latitude" value="%LATITUDE%"><br>
 
             <label for="indoorTempDisplayTime">Anzeigedauer Innentemperatur (Sekunden):</label>
             <input type="number" id="indoorTempDisplayTime" name="indoorTempDisplayTime" value="%INDOOR_TIME%"><br>

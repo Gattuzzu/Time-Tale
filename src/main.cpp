@@ -122,8 +122,6 @@ void setup() {
   // LED-Streifen Initialisieren
   myLedStrip = new LedStrip(LED_PIN, NUM_LEDS);
   // updateDisplay->ledStripTest();
-  myLedStrip->setSingleLED(1, 255, 0, 0); // °C
-  myLedStrip->setSingleLED(8, 0, 0, 255); // %
 
   // Sensoren
   tempHumi = new TempHumi();
@@ -163,7 +161,7 @@ void updateSensorValues(unsigned long &lastApiCall, boolean forceUpdate){
 
     if (forceUpdate || millis() - lastApiCall >= SENSOR_UPDATE_CYCLE ) {
       lastApiCall = millis();
-      
+
       // Temperatur und Luftfeuchtigkeit
       float actTemperature;
       float actHumidity;
@@ -530,7 +528,11 @@ void showMenu(unsigned long &lastIPaddressChange, unsigned long &lastChangeFromU
           ConfigurationPortal::getInstance().saveConfig(currentDeviceConfig); // Die Änderung speichern
           
           updateDisplay->updateVolume(currentDeviceConfig.volume);
-          updateDisplay->playSound(NTPTimeSync::getInstance().getHour()); // Test Sound (Aktuelle Studen) abspielen
+
+          int playHour = NTPTimeSync::getInstance().getHour() % 12; // 24h auf 12h umwandeln
+          playHour = playHour == 0 ? 12 : playHour; // Wenn 0 Uhr -> 12 Ausgeben.
+          updateDisplay->playSound(playHour); // Test Sound (Aktuelle Stunde) abspielen
+
           updateDisplay->showMenu(maxReached); // showMenu() aufrufen, um das erreichen vom Max anzuzeigen
           break;
         }
@@ -561,6 +563,7 @@ void showMenu(unsigned long &lastIPaddressChange, unsigned long &lastChangeFromU
       // Variablen zurücksetzen:
       menuPoint = 1;
       ipAddressIndex = 0;
+      updateDisplay->clearTime();
 
       menuIsActiv = false;
     }

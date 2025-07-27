@@ -15,7 +15,7 @@ const uint8_t PCF_ADDRESSES[5] = {0x20, 0x21, 0x22, 0x23, 0x24};
 LedStrip* myLedStrip;
 
 // Variablen
-float lastTemp = 0;
+float lastTemp = -999;
 CRGB displayColorTime = CRGB::Blue;
 
 boolean songPlayed = false;
@@ -62,6 +62,9 @@ class UpdateDisplay {
             sevenSegmentDisplays[0]->allSegmentsOff();
             sevenSegmentDisplays[1]->allSegmentsOff();
             sevenSegmentDisplays[2]->allSegmentsOff();
+            
+            // lastTemp auf 999 setzten, damit beim nächsten Aufruf von updateTemperature() die Temperatur neu angezeigt wird
+            lastTemp = -999; 
         }
 
         // Wert von Feuchtigkeit an die Anzeige übergeben
@@ -175,7 +178,7 @@ class UpdateDisplay {
 
         // Wert der Pollen an die Anzeige übergeben.
         void updatePollen(int maxPollenLevel) {
-            if(maxPollenLevel >= 0 || maxPollenLevel <= 5){
+            if(maxPollenLevel >= 0 && maxPollenLevel <= 5){
 
                 int r, g, b; 
                 r = map(maxPollenLevel, 0, 5, 0, 255); // Rotanteil steigt von 0 (Grün) auf 255 (Rot)
@@ -285,6 +288,10 @@ class UpdateDisplay {
             
         }
 
+        void clearTime(){
+            myLedStrip->clearGroupLEDs(12, 111, false);
+        }
+
         // Farbe der Zeitanzeige einstellen
         void setColorTime(int r, int g, int b){
             displayColorTime = CRGB(r, g, b);
@@ -358,6 +365,9 @@ class UpdateDisplay {
             sevenSegmentDisplays[0]->displayDigit( ipAddressPart        % 10, showPoint);
             sevenSegmentDisplays[1]->displayDigit((ipAddressPart / 10)  % 10);
             sevenSegmentDisplays[2]->displayDigit((ipAddressPart / 100) % 10);
+
+            // lastTemp auf 999 setzten, damit beim nächsten Aufruf von updateTemperature() die Temperatur neu angezeigt wird
+            lastTemp = -999; 
         }
 
         // Testen der Sieben Segment Anzeige
