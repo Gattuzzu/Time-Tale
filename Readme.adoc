@@ -1,4 +1,30 @@
-# Time-Tale
+# Time-Tale - Die intelligente Word und Health Clock
+
+Time-Tale ist eine innovative und ästhetisch ansprechende Text-Uhr, die die Funktionalität einer klassischen Word Clock mit erweiterten Gesundheits- und Umweltsensoren verbindet. 
+
+image::Time-Tale.jpg["Time-Tale"]
+
+Hauptfunktionen:
+
+* Textbasierte Zeitanzeige: Die Uhrzeit wird in ausgeschriebenen Worten auf einem RGBW-LED-Display angezeigt, was eine moderne und visuell ansprechende Alternative zur traditionellen Zeitanzeige darstellt.
+
+* Gesundheits-Dashboard: Time-Tale fungiert als eine "Health Clock" und überwacht wichtige Umgebungsparameter:
+
+** CO₂-Messung: Über einen integrierten Sensor wird die Raumluftqualität erfasst und wird über Farbcodes visuel dargestellt.
+
+** Temperatur- und Luftfeuchtigkeitsanzeige: Sensoren liefern Echtzeitdaten zur Innenraumtemperatur und Luftfeuchtigkeit.
+
+** Pollen belastungsanzeige : Per Netzwerkverbindung wird der aktuelle Pollenflug ermittelt und wird über Farbcodes visuel dargestelltt.
+
+* Smarte Zusatzfunktionen:
+
+** Sprachausgabe: Die Uhrzeit wird zur vollen Stunde per Lautsprecher angegeben.
+
+** Wetteranzeige: Netzwerkbasierte Wetterdaten werden mithilfe selbsterklärender Symbole (Sonne, Wolke, Regen) visualisiert.
+
+** Benutzerfreundlichkeit: Die Steuerung ist sowohl über einfache physische Tasten als auch optional über eine App oder ein Webinterface möglich.
+
+** Modernes Design: Alle Komponenten sind in einem kompakten, wohnraumtauglichen Gehäuse untergebracht, das Funktionalität und Ästhetik vereint.
 
 
 ## Troubleshooting
