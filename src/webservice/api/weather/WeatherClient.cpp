@@ -36,13 +36,22 @@ bool WeatherClient::parseWeatherJson(JsonDocument& doc, WeatherData& outWeatherD
     // 2. Luftfeuchtigkeit (aus "relativeHumidity")
     outWeatherData.relativeHumidity = doc["relativeHumidity"] | 0.0f;
 
-    // 3. Wetterart als Enum (aus "weatherCondition.description.text")
+    // 3. Wetterart als Enum (aus "weatherCondition.type")
     if (!doc["weatherCondition"].isNull()) {
         String typeString = doc["weatherCondition"]["type"].as<String>();
         outWeatherData.weatherType = WeatherData::weatherConditionStringToType(typeString);
     } else {
         outWeatherData.weatherType = WeatherConditionType::UNKNOWN; // Fallback, falls das Feld fehlt
     }
+
+    // 4. Tag/Nacht-Flag (aus "isDaytime")
+    outWeatherData.isDaytime = doc["isDaytime"] | false;
+
+    // 5. UV-Index (aus "uvIndex")
+    outWeatherData.uvIndex = doc["uvIndex"] | 0.0f;
+
+    // 6. Regenwahrscheinlichkeit in % (aus "precipitation.probability.percent")
+    outWeatherData.precipitationProbabilityPercent = doc["precipitation"]["probability"]["percent"] | 0.0f;
 
     Logger::log(LogLevel::Info, outWeatherData.toString());
 

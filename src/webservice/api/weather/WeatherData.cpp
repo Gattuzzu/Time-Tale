@@ -10,6 +10,9 @@ void WeatherData::reset() {
     temperature.unit = "";
     relativeHumidity = 0.0f;
     weatherType = WeatherConditionType::UNKNOWN; // Standardwert für das Enum
+    isDaytime = false;
+    uvIndex = 0.0f;
+    precipitationProbabilityPercent = 0.0f;
 }
 
 WeatherConditionType WeatherData::weatherConditionStringToType(const String& typeString){
@@ -113,6 +116,9 @@ String WeatherData::toString() {
            s += "\nTemperature: " + String(temperature.degrees) + String(temperature.unit);
            s += "\nRelative Humidity: " + String(relativeHumidity) + "%";
            s += "\nWeather Type: " + String(weatherConditionTypeToString(weatherType));
+           s += "\nIs Daytime: " + String(isDaytime ? "true" : "false");
+           s += "\nUV Index: " + String(uvIndex);
+           s += "\nPrecipitation Probability: " + String(precipitationProbabilityPercent) + "%";
            s += "\n--- End Weather Data ---";
     return s;
 }
