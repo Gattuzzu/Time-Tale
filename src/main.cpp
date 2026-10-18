@@ -78,7 +78,7 @@ void setup() {
   }
 
   Logger::setup(LOG_LEVEL); // Logger initialisieren (ohne NTP, da noch nicht verfügbar)
-  Logger::log(LogLevel::Info, "Programm gestartet und Logger initialisiert.");
+  Logger::log(LogLevel::Info, "Programm gestartet (Version " + String(FIRMWARE_VERSION) + ") und Logger initialisiert.");
 
   // Mp3Player initialisieren
   Mp3Player::getInstance().begin(Serial1);

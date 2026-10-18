@@ -1,3 +1,6 @@
+// Firmware Version
+#define FIRMWARE_VERSION "v1.1"
+
 // W-Lan vom Arduino
 #define AP_SSID "Time-Tale"
 #define AP_PASSWORD "Time-Tale"

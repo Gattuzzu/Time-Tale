@@ -1,4 +1,5 @@
-# Time-Tale - Die intelligente Word und Health Clock
+# Time-Tale - Die intelligente Word und Health Clock (v1.1)
+:version: v1.1
 
 Time-Tale ist eine innovative und ästhetisch ansprechende Text-Uhr, die die Funktionalität einer klassischen Word Clock mit erweiterten Gesundheits- und Umweltsensoren verbindet. 
 
