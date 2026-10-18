@@ -301,12 +301,7 @@ bool connectToWiFi() {
 void initializeNetworkServices() {
     Logger::log(LogLevel::Info, "Initialisiere Netzwerkdienste...");
 
-    // NTPTimeSync initialisieren (nutzt die bereits aktive WLAN-Verbindung)
-    // Verwendet die Werte aus currentDeviceConfig
-    // Annahme: NTPTimeSync::getInstance() kann mit neuen Parametern re-initialisiert werden
-    // oder die Parameter werden intern aktualisiert.
-    // timeOffsetHours ist in h -> Die Methode benötigt aber Sekunden.
-    NTPTimeSync::getInstance(currentDeviceConfig.ntpServer.c_str(), (currentDeviceConfig.timeOffsetHours * 60 * 60), UPDATE_INTERVALL);
+    // NTPTimeSync synchronisieren (nutzt die bereits aktive WLAN-Verbindung)
     if (NTPTimeSync::getInstance().begin()) {
         // Zeit an Logger weitergeben, falls Logger eine NTP-Instanz zur Zeitstempelung benötigt
         Logger::setup(LOG_LEVEL, &NTPTimeSync::getInstance());
@@ -328,11 +323,8 @@ void initializeNetworkServices() {
 void applyDeviceSettings() {
     Logger::log(LogLevel::Info, "Wende Geräteeinstellungen an...");
 
-    // Beispiel: NTP-Client initialisieren (nur wenn NTPTimeSync noch nicht initialisiert wurde oder neu initialisiert werden muss)
-    // Wenn NTPTimeSync.begin() im initializeNetworkServices() aufgerufen wird,
-    // ist dieser Aufruf hier redundant, es sei denn, die Einstellungen haben sich geändert.
-    // configTime(currentDeviceConfig.timeOffsetHours * 3600, 0, currentDeviceConfig.ntpServer.c_str());
     Logger::log(LogLevel::Info, "NTP-Server gesetzt auf: " + currentDeviceConfig.ntpServer + " mit Zeitverschiebung: " + String(currentDeviceConfig.timeOffsetHours) + "h");
+    NTPTimeSync::getInstance(currentDeviceConfig.ntpServer.c_str(), (currentDeviceConfig.timeOffsetHours * 60 * 60), UPDATE_INTERVALL);
 
     // FastLED Textfarbe setzen
     CRGB displayColor = CRGB(currentDeviceConfig.textColorCRGB);

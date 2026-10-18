@@ -13,8 +13,13 @@ class NTPTimeSync {
 public:
   static NTPTimeSync& getInstance(const char* ntpServer = nullptr, long timeOffset = 0, long updateInterval = 0) {
       static NTPTimeSync instance(ntpServer, timeOffset, updateInterval);
+      if (ntpServer != nullptr) {
+          instance.configure(ntpServer, timeOffset, updateInterval);
+      }
       return instance;
   }
+
+  void configure(const char* ntpServer, long timeOffset, long updateInterval);
 
   bool begin();
 
@@ -31,7 +36,7 @@ private:
   NTPTimeSync(const NTPTimeSync&) = delete;
   NTPTimeSync& operator=(const NTPTimeSync&) = delete;
 
-  const char* _ntpServer;
+  String _ntpServer;
   long _timeOffset;
   long _updateInterval;
 

@@ -1,6 +1,17 @@
 #include "NTPTimeSync.h"
 #include "../../logger/Logger.h"
 
+void NTPTimeSync::configure(const char* ntpServer, long timeOffset, long updateInterval) {
+  if (ntpServer != nullptr && strlen(ntpServer) > 0) {
+    _ntpServer = ntpServer;
+    _NtpClient.setPoolServerName(_ntpServer.c_str());
+  }
+  _timeOffset = timeOffset;
+  _updateInterval = updateInterval;
+  _NtpClient.setTimeOffset(_timeOffset);
+  _NtpClient.setUpdateInterval(_updateInterval);
+}
+
 // Implementierung der begin() Methode
 // Diese Methode nimmt KEINE WiFiUDP Instanz mehr entgegen.
 bool NTPTimeSync::begin() {
@@ -10,18 +21,22 @@ bool NTPTimeSync::begin() {
       return false;
   }
 
+  if (_ntpServer.length() > 0) {
+    _NtpClient.setPoolServerName(_ntpServer.c_str());
+  }
+
   // Der NTPClient kümmert sich um das `begin()` des zugrunde liegenden UDP-Sockets.
   _NtpClient.begin(); // Dies sollte den UDP-Port für NTP starten
 
   Logger::log(LogLevel::Info, "Synchronisiere Zeit mit NTP...");
-  // Erster Update-Versuch beim Start
-  bool updateSuccess = _NtpClient.update();
+  // Erster Sync-Versuch beim Start erzwingen (forceUpdate)
+  bool updateSuccess = _NtpClient.forceUpdate();
   if (!updateSuccess) {
     int attempts = 0;
-    while(!updateSuccess && attempts < 10) { // Max. 10 Versuche
+    while (!updateSuccess && attempts < 10) { // Max. 10 Versuche
       delay(500);
       Logger::log(LogLevel::Info, ".");
-      updateSuccess = _NtpClient.update();
+      updateSuccess = _NtpClient.forceUpdate();
       attempts++;
     }
   }
@@ -64,8 +79,8 @@ time_t NTPTimeSync::getEpochTime() {
 // Implementierung des privaten Konstruktors
 NTPTimeSync::NTPTimeSync(const char* ntpServer, long timeOffset, long updateInterval)
   // Hier wird _NtpClient DIREKT mit der privaten _internalNtpUDP initialisiert.
-  : _ntpServer(ntpServer), _timeOffset(timeOffset), _updateInterval(updateInterval),
-    _NtpClient(_internalNtpUDP, ntpServer, timeOffset, updateInterval) {
+  : _ntpServer((ntpServer != nullptr) ? ntpServer : ""), _timeOffset(timeOffset), _updateInterval(updateInterval),
+    _NtpClient(_internalNtpUDP, (_ntpServer.length() > 0) ? _ntpServer.c_str() : nullptr, timeOffset, updateInterval) {
   // Der Konstruktor kann leer bleiben.
 }
 
