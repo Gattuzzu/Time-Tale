@@ -19,6 +19,7 @@
 #define NVS_KEY_LEDBRIGHTNESS "led_brightness"
 #define NVS_KEY_VOLUME "volume"
 #define NVS_KEY_NIGHT_DIM "night_dim"
+#define NVS_KEY_THUNDER_FLASHES "thund_flashes"
 
 // Standardwerte für die Konfiguration, falls noch nichts im NVS gespeichert ist.
 const char* DEFAULT_NTP_SERVER = "ntp.metas.ch";
@@ -33,6 +34,7 @@ const uint32_t DEFAULT_TEXT_COLOR = 0xFFFFFF; // Weiss (CRGB::White)
 const int DEFAULT_BRIGHTNESS = 50; // Standard-Helligkeit (0-100)
 const int DEFAULT_VOLUME = 15; // Mitte des Bereichs
 const int DEFAULT_NIGHT_DIM = 30; // Standard-Nachtdimm-Prozentsatz (0-100)
+const int DEFAULT_THUNDER_FLASHES = 60; // Standardmässig 60x pro Stunde blitzen (0 = dauerhaft gelb)
 
 // HTML-Seite als PROGMEM String.
 // Enthält Platzhalter (z.B. %SSID%), die zur Laufzeit durch aktuelle Werte ersetzt werden.
@@ -169,6 +171,9 @@ const char PROGMEM INDEX_HTML_TEMPLATE[] = R"rawliteral(
             <label for="nightDimPercent">Nacht-Abdimmung (0 = kein Dimmen, 100 = ganz aus): <span id="nightDimPercentValue">%NIGHT_DIM%</span></label>
             <input type="range" id="nightDimPercent" name="nightDimPercent" min="0" max="100" value="%NIGHT_DIM%" oninput="document.getElementById('nightDimPercentValue').innerText = this.value;"><br>
 
+            <label for="thunderFlashes">Gewitter-Blitze pro Stunde (0 = dauerhaft gelb, z.B. 60 = blau mit zufälligen Blitzen):</label>
+            <input type="number" id="thunderFlashes" name="thunderFlashes" min="0" max="3600" value="%THUNDER_FLASHES%"><br>
+
             <label for="volume">Lautstärke (0 = Stumm, 30 = Max): <span id="volumeValue">%VOLUME%</span></label>
             <input type="range" id="volume" name="volume" min="0" max="30" value="%VOLUME%" oninput="document.getElementById('volumeValue').innerText = this.value;"><br>
 
@@ -255,6 +260,7 @@ bool ConfigurationPortal::loadConfig(AppConfig& config) {
     config.ledBrightness = _preferences.getInt(NVS_KEY_LEDBRIGHTNESS, DEFAULT_BRIGHTNESS);
     config.volume = _preferences.getInt(NVS_KEY_VOLUME, DEFAULT_VOLUME);
     config.nightDimPercent = _preferences.getInt(NVS_KEY_NIGHT_DIM, DEFAULT_NIGHT_DIM);
+    config.thunderFlashesPerHour = _preferences.getInt(NVS_KEY_THUNDER_FLASHES, DEFAULT_THUNDER_FLASHES);
 
     // Prüfe, ob eine WLAN-SSID gefunden wurde, um zu bestimmen, ob eine "gespeicherte" Konfiguration existiert.
     if (config.wifiSsid.length() > 0) {
@@ -283,6 +289,7 @@ bool ConfigurationPortal::saveConfig(const AppConfig& config) {
     _preferences.putInt(NVS_KEY_LEDBRIGHTNESS, config.ledBrightness);
     _preferences.putInt(NVS_KEY_VOLUME, config.volume);
     _preferences.putInt(NVS_KEY_NIGHT_DIM, config.nightDimPercent);
+    _preferences.putInt(NVS_KEY_THUNDER_FLASHES, config.thunderFlashesPerHour);
 
     Logger::log(LogLevel::Info, "Konfiguration erfolgreich in NVS geschrieben.");
     return true; // put-Operationen geben keinen direkten Fehler zurück, Annahme ist Erfolg.
@@ -319,6 +326,7 @@ void ConfigurationPortal::handleRoot() {
     html.replace("%OUTDOOR_TIME%", String(currentConfig.outdoorTempDisplayTimeSec));
     html.replace("%LEDBRIGHTNESS%", String(currentConfig.ledBrightness));
     html.replace("%NIGHT_DIM%", String(currentConfig.nightDimPercent));
+    html.replace("%THUNDER_FLASHES%", String(currentConfig.thunderFlashesPerHour));
     html.replace("%VOLUME%", String(currentConfig.volume));
 
     // Setze das "selected"-Attribut für die aktuell gespeicherte Farbe
@@ -429,6 +437,11 @@ void ConfigurationPortal::handleSaveConfig() {
         if (newConfig.nightDimPercent < 0)   { newConfig.nightDimPercent = 0; }
         if (newConfig.nightDimPercent > 100) { newConfig.nightDimPercent = 100; }
     }
+    if (_server.hasArg("thunderFlashes")) {
+        newConfig.thunderFlashesPerHour = _server.arg("thunderFlashes").toInt();
+        if (newConfig.thunderFlashesPerHour < 0)    { newConfig.thunderFlashesPerHour = 0; }
+        if (newConfig.thunderFlashesPerHour > 3600) { newConfig.thunderFlashesPerHour = 3600; }
+    }
     if (_server.hasArg("volume")) {
         newConfig.volume = _server.arg("volume").toInt();
         // Sicherstellen, dass die Lautstärke im gültigen Bereich bleibt (0-30)
@@ -451,6 +464,7 @@ void ConfigurationPortal::handleSaveConfig() {
     Logger::log(LogLevel::Info, "  Textfarbe: 0x" + String(newConfig.textColorCRGB, HEX));
     Logger::log(LogLevel::Info, "  LED Helligkeit: " + String(newConfig.ledBrightness));
     Logger::log(LogLevel::Info, "  Nacht-Abdimmung: " + String(newConfig.nightDimPercent) + "%");
+    Logger::log(LogLevel::Info, "  Gewitter-Blitze/Stunde: " + String(newConfig.thunderFlashesPerHour));
     Logger::log(LogLevel::Info, "  Lautstärke: " + String(newConfig.volume));
 
 

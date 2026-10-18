@@ -213,21 +213,20 @@ void i2cBusScan(){
     // Serial.print("Addresse: ");
     // Serial.println(String(address, HEX));
 
-    if (error == 0)
-    {
+    if (error == 0) {
       Serial.print("I2C device found at address 0x");
-      if (address<16)
-        { Serial.print("0"); }
+      if (address < 16) {
+        Serial.print("0");
+      }
       Serial.print(address,HEX);
       Serial.println("  !");
 
       nDevices++;
-    }
-    else if (error==4)
-    {
+    } else if (error == 4) {
       Serial.print("Unknown error at address 0x");
-      if (address<16)
-        { Serial.print("0"); }
+      if (address < 16) {
+        Serial.print("0");
+      }
       Serial.println(address,HEX);
     }
   }
@@ -665,7 +664,7 @@ void loop() {
         }
       } else {
         // Zeigt Aussentemperatur/Wetterdaten
-        updateDisplay->updateWeather(currentWeatherData.weatherType, currentWeatherData.isDaytime);
+        updateDisplay->updateWeather(currentWeatherData.weatherType, currentWeatherData.isDaytime, currentDeviceConfig.thunderFlashesPerHour);
         updateDisplay->applyNightDim(currentWeatherData.isDaytime, currentDeviceConfig.ledBrightness, currentDeviceConfig.nightDimPercent);
         updateDisplay->updateTemperature(currentWeatherData.temperature.degrees);
         updateDisplay->updateTempLED(false); // Annahme: false bedeutet Aussentemp-LED

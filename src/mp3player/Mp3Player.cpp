@@ -53,7 +53,11 @@ void Mp3Player::play(int trackNumber) {
 // }
 
 void Mp3Player::setVolume(int volume) {
-    if (volume < 0) volume = 0;
-    if (volume > 30) volume = 30;
+    if (volume < 0) {
+        volume = 0;
+    }
+    if (volume > 30) {
+        volume = 30;
+    }
     myDFPlayer.volume(volume);
 }

@@ -32,6 +32,7 @@ struct AppConfig {
     int ledBrightness;                // Helligkeit der LED-Anzeige (0-100)
     int volume;                       // Lautstärke in Schritten von 0-30 (0 = Mute)
     int nightDimPercent;              // Abdimmung bei Nacht in % (0 = kein Dimmen, 100 = ganz aus)
+    int thunderFlashesPerHour;        // Gewitter-Blitze pro Stunde (0 = dauerhaft gelb, >0 = blau leuchtend mit randomisierten gelben Blitzen)
 };
 
 class ConfigurationPortal {

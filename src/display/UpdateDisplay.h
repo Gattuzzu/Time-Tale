@@ -130,7 +130,8 @@ class UpdateDisplay {
 
         // Wert des Wetters an die Anzeige übergeben.
         // isDaytime: true = Tag (normale Farben), false = Nacht (gedämpfte/weisse Farben)
-        void updateWeather(WeatherConditionType weather, bool isDaytime = true) {
+        // thunderFlashesPerHour: 0 = dauerhaft gelb, >0 = standardmässig blau mit randomisierten gelben Blitzen
+        void updateWeather(WeatherConditionType weather, bool isDaytime = true, int thunderFlashesPerHour = 0) {
             myLedStrip->clearGroupLEDs(2, 6, false);
             switch(weather){
                 // case WeatherConditionType::TYPE_UNSPECIFIED: ; break;
@@ -188,8 +189,45 @@ class UpdateDisplay {
                 // case WeatherConditionType::HAIL: ; break;
                 // case WeatherConditionType::HAIL_SHOWERS: ; break;
                 case WeatherConditionType::THUNDERSTORM:
-                    // Gewitter: Tag & Nacht identisch gelb
-                    myLedStrip->setSingleLED(3, 255, 255, 0);
+                    if (thunderFlashesPerHour <= 0) {
+                        // Bei 0: dauerhaft gelb
+                        myLedStrip->setSingleLED(3, 255, 255, 0);
+                    } else {
+                        // Randomisierte Blitze basierend auf Blitzen pro Stunde
+                        // Durchschnittliches Intervall in ms: 3600000ms / thunderFlashesPerHour
+                        static unsigned long nextFlashTime = 0;
+                        static unsigned long flashEndTime = 0;
+                        unsigned long now = millis();
+
+                        if (nextFlashTime == 0) {
+                            // Erste Initialisierung: zufällige Zeit im Bereich 0.5x bis 1.5x des Durchschnitts
+                            unsigned long avgIntervalMs = 3600000UL / (unsigned long)thunderFlashesPerHour;
+                            unsigned long minIntervalMs = avgIntervalMs / 2;
+                            unsigned long maxIntervalMs = avgIntervalMs + minIntervalMs;
+                            nextFlashTime = now + (unsigned long)random(minIntervalMs, maxIntervalMs + 1);
+                        }
+
+                        if (now >= nextFlashTime && flashEndTime == 0) {
+                            // Blitz startet: zufällige Dauer zwischen 80ms und 180ms
+                            flashEndTime = now + (unsigned long)random(80, 181);
+                        }
+
+                        if (flashEndTime > 0 && now < flashEndTime) {
+                            // Gelber Blitz
+                            myLedStrip->setSingleLED(3, 255, 255, 0);
+                        } else {
+                            if (flashEndTime > 0 && now >= flashEndTime) {
+                                // Blitz beendet: nächste zufällige Blitzzeit berechnen
+                                flashEndTime = 0;
+                                unsigned long avgIntervalMs = 3600000UL / (unsigned long)thunderFlashesPerHour;
+                                unsigned long minIntervalMs = avgIntervalMs / 2;
+                                unsigned long maxIntervalMs = avgIntervalMs + minIntervalMs;
+                                nextFlashTime = now + (unsigned long)random(minIntervalMs, maxIntervalMs + 1);
+                            }
+                            // Standardmässig blau leuchten
+                            myLedStrip->setSingleLED(3, 0, 0, 255);
+                        }
+                    }
                     break;
                 // case WeatherConditionType::THUNDERSHOWER: ; break;
                 // case WeatherConditionType::LIGHT_THUNDERSTORM_RAIN: ; break;
