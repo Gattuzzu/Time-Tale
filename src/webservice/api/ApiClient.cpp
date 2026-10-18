@@ -4,6 +4,13 @@
 // Hilfsfunktion zum Entfernen der Chunked-Codierung aus einem rohen HTTP-Antwort-Body.
 // Diese Funktion geht davon aus, dass der Eingabestring 'rawResponse' sowohl die Chunk-Größen als auch die Daten enthält.
 String stripChunkedEncoding(const String& rawResponse) {
+    String trimmed = rawResponse;
+    trimmed.trim();
+    // Wenn die Antwort bereits mit '{' oder '[' beginnt, ist sie nicht chunked
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+        return rawResponse;
+    }
+
     String cleanedResponse = "";
     int currentIndex = 0;
 
@@ -52,59 +59,31 @@ String stripChunkedEncoding(const String& rawResponse) {
             break;
         }
     }
-    return cleanedResponse;
+    return (cleanedResponse.length() > 0) ? cleanedResponse : rawResponse;
 }
 
 // Konstruktor initialisiert Member
-ApiClient::ApiClient() : _host(nullptr), _apiKey(nullptr) {
-    // Root-CA-Zertifikat hier setzen, da es für alle Google APIs gleich sein sollte
-    // Gültig bis 2036-06-22
-    // Ein Neues Zertifikat kann von: https://pki.goog/repository/ herunter geladen werden
-    const char* google_root_ca = "-----BEGIN CERTIFICATE-----\n"
-                                 "MIIFVzCCAz+gAwIBAgINAgPlk28xsBNJiGuiFzANBgkqhkiG9w0BAQwFADBHMQsw\n"
-                                 "CQYDVQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZpY2VzIExMQzEU\n"
-                                 "MBIGA1UEAxMLR1RTIFJvb3QgUjEwHhcNMTYwNjIyMDAwMDAwWhcNMzYwNjIyMDAw\n"
-                                 "MDAwWjBHMQswCQYDVQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZp\n"
-                                 "Y2VzIExMQzEUMBIGA1UEAxMLR1RTIFJvb3QgUjEwggIiMA0GCSqGSIb3DQEBAQUA\n"
-                                 "A4ICDwAwggIKAoICAQC2EQKLHuOhd5s73L+UPreVp0A8of2C+X0yBoJx9vaMf/vo\n"
-                                 "27xqLpeXo4xL+Sv2sfnOhB2x+cWX3u+58qPpvBKJXqeqUqv4IyfLpLGcY9vXmX7w\n"
-                                 "Cl7raKb0xlpHDU0QM+NOsROjyBhsS+z8CZDfnWQpJSMHobTSPS5g4M/SCYe7zUjw\n"
-                                 "TcLCeoiKu7rPWRnWr4+wB7CeMfGCwcDfLqZtbBkOtdh+JhpFAz2weaSUKK0Pfybl\n"
-                                 "qAj+lug8aJRT7oM6iCsVlgmy4HqMLnXWnOunVmSPlk9orj2XwoSPwLxAwAtcvfaH\n"
-                                 "szVsrBhQf4TgTM2S0yDpM7xSma8ytSmzJSq0SPly4cpk9+aCEI3oncKKiPo4Zor8\n"
-                                 "Y/kB+Xj9e1x3+naH+uzfsQ55lVe0vSbv1gHR6xYKu44LtcXFilWr06zqkUspzBmk\n"
-                                 "MiVOKvFlRNACzqrOSbTqn3yDsEB750Orp2yjj32JgfpMpf/VjsPOS+C12LOORc92\n"
-                                 "wO1AK/1TD7Cn1TsNsYqiA94xrcx36m97PtbfkSIS5r762DL8EGMUUXLeXdYWk70p\n"
-                                 "aDPvOmbsB4om3xPXV2V4J95eSRQAogB/mqghtqmxlbCluQ0WEdrHbEg8QOB+DVrN\n"
-                                 "VjzRlwW5y0vtOUucxD/SVRNuJLDWcfr0wbrM7Rv1/oFB2ACYPTrIrnqYNxgFlQID\n"
-                                 "AQABo0IwQDAOBgNVHQ8BAf8EBAMCAYYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4E\n"
-                                 "FgQU5K8rJnEaK0gnhS9SZizv8IkTcT4wDQYJKoZIhvcNAQEMBQADggIBAJ+qQibb\n"
-                                 "C5u+/x6Wki4+omVKapi6Ist9wTrYggoGxval3sBOh2Z5ofmmWJyq+bXmYOfg6LEe\n"
-                                 "QkEzCzc9zolwFcq1JKjPa7XSQCGYzyI0zzvFIoTgxQ6KfF2I5DUkzps+GlQebtuy\n"
-                                 "h6f88/qBVRRiClmpIgUxPoLW7ttXNLwzldMXG+gnoot7TiYaelpkttGsN/H9oPM4\n"
-                                 "7HLwEXWdyzRSjeZ2axfG34arJ45JK3VmgRAhpuo+9K4l/3wV3s6MJT/KYnAK9y8J\n"
-                                 "ZgfIPxz88NtFMN9iiMG1D53Dn0reWVlHxYciNuaCp+0KueIHoI17eko8cdLiA6Ef\n"
-                                 "MgfdG+RCzgwARWGAtQsgWSl4vflVy2PFPEz0tv/bal8xa5meLMFrUKTX5hgUvYU/\n"
-                                 "Z6tGn6D/Qqc6f1zLXbBwHSs09dR2CQzreExZBfMzQsNhFRAbd03OIozUhfJFfbdT\n"
-                                 "6u9AWpQKXCBfTkBdYiJ23//OYb2MI3jSNwLgjt7RETeJ9r/tSQdirpLsQBqvFAnZ\n"
-                                 "0E6yove+7u7Y/9waLd64NnHi/Hm3lCXRSHNboTXns5lndcEZOitHTtNCjv0xyBZm\n"
-                                 "2tIMPNuzjsmhDYAPexZ3FL//2wmUspO8IFgV6dtxQ/PeEMMA3KgqlbbC1j+Qa3bb\n"
-                                 "bP6MvPJwNQzcmRk13NfIRmPVNnGuV/u3gm3c\n"
-                                 "-----END CERTIFICATE-----\n";
-    _client.setCACert(google_root_ca);
+ApiClient::ApiClient() : _host(""), _apiKey("") {
+    // Insecure-Modus für HTTPS: Erlaubt Verbindung auch wenn die interne Systemuhr
+    // des ESP32 vor dem ersten NTP-Sync noch auf 1970 steht.
+    _client.setInsecure();
 }
 
 void ApiClient::configure(const char* host, const char* apiKey) {
-    _host = host;
-    _apiKey = apiKey;
-    if (_host == nullptr || _apiKey == nullptr) {
-        Logger::log(LogLevel::Error, "ApiClient: Host oder API Key sind NULL. Sicherstellen, dass getInstance() einmal mit allen Parametern aufgerufen wird.");
+    if (host != nullptr) {
+        _host = host;
+    }
+    if (apiKey != nullptr) {
+        _apiKey = apiKey;
+    }
+    if (_host.length() == 0 || _apiKey.length() == 0) {
+        Logger::log(LogLevel::Error, "ApiClient: Host oder API Key sind leer. Sicherstellen, dass ein gültiger Google API Key konfiguriert ist.");
     }
 }
 
 bool ApiClient::sendGetRequest(const String& path, JsonDocument& doc) {
-    if (_host == nullptr || _apiKey == nullptr) {
-        Logger::log(LogLevel::Error, "ApiClient: Host oder API Key nicht gesetzt. Bitte configure() aufrufen.");
+    if (_host.length() == 0 || _apiKey.length() == 0) {
+        Logger::log(LogLevel::Error, "ApiClient: Host oder API Key nicht gesetzt. Bitte configure() aufrufen oder im Webportal eintragen.");
         return false;
     }
 
@@ -113,9 +92,9 @@ bool ApiClient::sendGetRequest(const String& path, JsonDocument& doc) {
         return false;
     }
 
-    Logger::log(LogLevel::Info, "ApiClient: Verbinde mit " + String(_host));
+    Logger::log(LogLevel::Info, "ApiClient: Verbinde mit " + _host);
 
-    if (!_client.connect(_host, 443)) { // 443 ist der Standard-HTTPS-Port
+    if (!_client.connect(_host.c_str(), 443)) { // 443 ist der Standard-HTTPS-Port
         Logger::log(LogLevel::Error, "ApiClient: Verbindung zum Server fehlgeschlagen!");
         return false;
     }
@@ -126,6 +105,9 @@ bool ApiClient::sendGetRequest(const String& path, JsonDocument& doc) {
     _client.println(F(" HTTP/1.1"));
     _client.print(F("Host: "));
     _client.println(_host);
+    _client.println(F("User-Agent: ESP32-TimeTale"));
+    _client.println(F("Accept: application/json"));
+    _client.println(F("Accept-Encoding: identity"));
     _client.println(F("Connection: close")); // Verbindung nach der Anfrage schließen
     _client.println(); // Leere Zeile nach den Headern
 
@@ -143,34 +125,59 @@ bool ApiClient::sendGetRequest(const String& path, JsonDocument& doc) {
 
     // Statuszeile lesen (z.B. "HTTP/1.1 200 OK")
     String statusLine = _client.readStringUntil('\n');
+    statusLine.trim();
     Logger::log(LogLevel::Debug, "ApiClient: Status Line: " + statusLine);
 
-    if (statusLine.indexOf("200 OK") == -1) {
+    if (statusLine.indexOf("200") == -1) {
         Logger::log(LogLevel::Error, "ApiClient: API-Fehler (kein 200 OK). Status: " + statusLine);
 
-        // Auch hier die restlichen Header verwerfen, damit die Verbindung sauber geschlossen wird
-        while (_client.available() && _client.readStringUntil('\n') != "\r"); // Lies bis zur leeren Zeile
+        // Header bis zur Leerzeile überspringen
+        while (_client.available()) {
+            String line = _client.readStringUntil('\n');
+            line.trim();
+            if (line.length() == 0) {
+                break;
+            }
+        }
+        String errorBody = _client.readString();
+        Logger::log(LogLevel::Error, "ApiClient: Server-Fehlerantwort: " + errorBody);
         _client.stop();
         return false;
     }
     
-    // Alle weiteren Header bis zur leeren Zeile verwerfen
+    // Header lesen und prüfen, ob Transfer-Encoding: chunked verwendet wird
+    bool isChunked = false;
     while (_client.available()) {
         String line = _client.readStringUntil('\n');
         Logger::log(LogLevel::Debug, "Header: " + line); // Debug: Zeige alle Header
 
-        if (line.length() == 0 || line == "\r") { // Prüfe auf leere Zeile (CRLF oder nur LF)
+        String trimmedLine = line;
+        trimmedLine.trim();
+        if (trimmedLine.length() == 0) {
             Logger::log(LogLevel::Debug, "Ende der Header erreicht.");
             break; // Stoppe nach der leeren Zeile, die das Ende der Header signalisiert
         }
+
+        String lowerLine = trimmedLine;
+        lowerLine.toLowerCase();
+        if (lowerLine.indexOf("transfer-encoding: chunked") != -1) {
+            isChunked = true;
+        }
     }
 
-    // Den gesamten Body lesen, der Chunk-Informationen enthalten kann
+    // Den gesamten Body lesen
     String rawResponseBody = _client.readString();
     Logger::log(LogLevel::Debug, "======================================\nRoher API Antwort Body (inkl. Chunk-Info):" + rawResponseBody +"\n======================================");
 
-    // Den Body von Chunk-Informationen bereinigen
-    String cleanedJsonBody = stripChunkedEncoding(rawResponseBody);
+    // Nur von Chunk-Informationen bereinigen, wenn tatsächlich chunked übertragen
+    String cleanedJsonBody;
+    String trimmedBody = rawResponseBody;
+    trimmedBody.trim();
+    if (isChunked && !trimmedBody.startsWith("{") && !trimmedBody.startsWith("[")) {
+        cleanedJsonBody = stripChunkedEncoding(rawResponseBody);
+    } else {
+        cleanedJsonBody = rawResponseBody;
+    }
     Logger::log(LogLevel::Debug, "======================================\nBereinigter JSON Body:" + cleanedJsonBody + "======================================");
 
     // JSON-Antwort parsen

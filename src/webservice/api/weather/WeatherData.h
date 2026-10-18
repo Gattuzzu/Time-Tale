@@ -65,7 +65,10 @@ public:
     // --- Benötigte Datenfelder ---
     WeatherValueDegrees temperature; // Für die aktuelle Temperatur (aus "temperature" im JSON)
     float relativeHumidity;          // Luftfeuchtigkeit (aus "relativeHumidity" im JSON)
-    WeatherConditionType weatherType; // Beschreibung der Wetterart als Enum (aus "weatherCondition.description.text" im JSON)
+    WeatherConditionType weatherType; // Beschreibung der Wetterart als Enum (aus "weatherCondition.type" im JSON)
+    bool isDaytime;                        // Tag/Nacht-Flag (aus "isDaytime" im JSON)
+    float uvIndex;                         // UV-Index (aus "uvIndex" im JSON)
+    float precipitationProbabilityPercent; // Regenwahrscheinlichkeit in % (aus "precipitation.probability.percent" im JSON)
 
     // Methode zum Zurücksetzen aller Werte
     void reset();

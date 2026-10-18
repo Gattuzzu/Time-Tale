@@ -129,15 +129,29 @@ class UpdateDisplay {
         }
 
         // Wert des Wetters an die Anzeige übergeben.
-        void updateWeather(WeatherConditionType weather) {
+        // isDaytime: true = Tag (normale Farben), false = Nacht (gedämpfte/weisse Farben)
+        // thunderFlashesPerHour: 0 = dauerhaft gelb, >0 = standardmässig blau mit randomisierten gelben Blitzen
+        void updateWeather(WeatherConditionType weather, bool isDaytime = true, int thunderFlashesPerHour = 0) {
             myLedStrip->clearGroupLEDs(2, 6, false);
             switch(weather){
                 // case WeatherConditionType::TYPE_UNSPECIFIED: ; break;
-                case WeatherConditionType::CLEAR: myLedStrip->setSingleLED(7, 255, 255, 0); break;
+                case WeatherConditionType::CLEAR:
+                    // Tag: Sonne gelb | Nacht: Mond weiss
+                    if (isDaytime) { myLedStrip->setSingleLED(7, 255, 255,   0); }
+                    else           { myLedStrip->setSingleLED(7, 255, 255, 255); }
+                    break;
                 // case WeatherConditionType::MOSTLY_CLEAR: ; break;
-                case WeatherConditionType::PARTLY_CLOUDY: myLedStrip->setSingleLED(6, 143, 139, 102); break;
+                case WeatherConditionType::PARTLY_CLOUDY:
+                    // Tag: Bewölkt-gelb | Nacht: Bewölkt-dunkelblau
+                    if (isDaytime) { myLedStrip->setSingleLED(6, 143, 139, 102); }
+                    else           { myLedStrip->setSingleLED(6,  60,  60,  80); }
+                    break;
                 // case WeatherConditionType::MOSTLY_CLOUDY: ; break;
-                case WeatherConditionType::CLOUDY: myLedStrip->setSingleLED(5, 128, 128, 128); break;
+                case WeatherConditionType::CLOUDY:
+                    // Tag: Grau | Nacht: Dunkelgrau
+                    if (isDaytime) { myLedStrip->setSingleLED(5, 128, 128, 128); }
+                    else           { myLedStrip->setSingleLED(5,  50,  50,  50); }
+                    break;
                 // case WeatherConditionType::WINDY: ; break;
                 // case WeatherConditionType::WIND_AND_RAIN: ; break;
                 // case WeatherConditionType::LIGHT_RAIN_SHOWERS: ; break;
@@ -147,7 +161,10 @@ class UpdateDisplay {
                 // case WeatherConditionType::HEAVY_RAIN_SHOWERS: ; break;
                 // case WeatherConditionType::LIGHT_TO_MODERATE_RAIN: ; break;
                 // case WeatherConditionType::MODERATE_TO_HEAVY_RAIN: ; break;
-                case WeatherConditionType::RAIN: myLedStrip->setSingleLED(4, 0, 0, 255); break;
+                case WeatherConditionType::RAIN:
+                    // Regen: Tag & Nacht identisch blau
+                    myLedStrip->setSingleLED(4, 0, 0, 255);
+                    break;
                 // case WeatherConditionType::LIGHT_RAIN: ; break;
                 // case WeatherConditionType::HEAVY_RAIN: ; break;
                 // case WeatherConditionType::RAIN_PERIODICALLY_HEAVY: ; break;
@@ -158,7 +175,10 @@ class UpdateDisplay {
                 // case WeatherConditionType::HEAVY_SNOW_SHOWERS: ; break;
                 // case WeatherConditionType::LIGHT_TO_MODERATE_SNOW: ; break;
                 // case WeatherConditionType::MODERATE_TO_HEAVY_SNOW: ; break;
-                case WeatherConditionType::SNOW: myLedStrip->setSingleLED(2, 255, 255, 255); break;
+                case WeatherConditionType::SNOW:
+                    // Schnee: immer weiss
+                    myLedStrip->setSingleLED(2, 255, 255, 255);
+                    break;
                 // case WeatherConditionType::LIGHT_SNOW: ; break;
                 // case WeatherConditionType::HEAVY_SNOW: ; break;
                 // case WeatherConditionType::SNOWSTORM: ; break;
@@ -168,12 +188,67 @@ class UpdateDisplay {
                 // case WeatherConditionType::RAIN_AND_SNOW: ; break;
                 // case WeatherConditionType::HAIL: ; break;
                 // case WeatherConditionType::HAIL_SHOWERS: ; break;
-                case WeatherConditionType::THUNDERSTORM: myLedStrip->setSingleLED(3, 255, 255, 0); break;
+                case WeatherConditionType::THUNDERSTORM:
+                    if (thunderFlashesPerHour <= 0) {
+                        // Bei 0: dauerhaft gelb
+                        myLedStrip->setSingleLED(3, 255, 255, 0);
+                    } else {
+                        // Randomisierte Blitze basierend auf Blitzen pro Stunde
+                        // Durchschnittliches Intervall in ms: 3600000ms / thunderFlashesPerHour
+                        static unsigned long nextFlashTime = 0;
+                        static unsigned long flashEndTime = 0;
+                        unsigned long now = millis();
+
+                        if (nextFlashTime == 0) {
+                            // Erste Initialisierung: zufällige Zeit im Bereich 0.5x bis 1.5x des Durchschnitts
+                            unsigned long avgIntervalMs = 3600000UL / (unsigned long)thunderFlashesPerHour;
+                            unsigned long minIntervalMs = avgIntervalMs / 2;
+                            unsigned long maxIntervalMs = avgIntervalMs + minIntervalMs;
+                            nextFlashTime = now + (unsigned long)random(minIntervalMs, maxIntervalMs + 1);
+                        }
+
+                        if (now >= nextFlashTime && flashEndTime == 0) {
+                            // Blitz startet: zufällige Dauer zwischen 80ms und 180ms
+                            flashEndTime = now + (unsigned long)random(80, 181);
+                        }
+
+                        if (flashEndTime > 0 && now < flashEndTime) {
+                            // Gelber Blitz
+                            myLedStrip->setSingleLED(3, 255, 255, 0);
+                        } else {
+                            if (flashEndTime > 0 && now >= flashEndTime) {
+                                // Blitz beendet: nächste zufällige Blitzzeit berechnen
+                                flashEndTime = 0;
+                                unsigned long avgIntervalMs = 3600000UL / (unsigned long)thunderFlashesPerHour;
+                                unsigned long minIntervalMs = avgIntervalMs / 2;
+                                unsigned long maxIntervalMs = avgIntervalMs + minIntervalMs;
+                                nextFlashTime = now + (unsigned long)random(minIntervalMs, maxIntervalMs + 1);
+                            }
+                            // Standardmässig blau leuchten
+                            myLedStrip->setSingleLED(3, 0, 0, 255);
+                        }
+                    }
+                    break;
                 // case WeatherConditionType::THUNDERSHOWER: ; break;
                 // case WeatherConditionType::LIGHT_THUNDERSTORM_RAIN: ; break;
                 // case WeatherConditionType::SCATTERED_THUNDERSTORMS: ; break;
                 // case WeatherConditionType::HEAVY_THUNDERSTORM: ; break;
                 case WeatherConditionType::UNKNOWN: myLedStrip->clearGroupLEDs(2, 6); break; // Fallback -> Nichts anzeigen break;
+            }
+        }
+
+        // Helligkeit aller LED's für die Nacht dimmen.
+        // nightDimPercent: 0 = kein Dimmen, 100 = ganz aus (aus AppConfig)
+        // baseBrightness: die konfigurierte Tages-Helligkeit (0-100)
+        void applyNightDim(bool isDaytime, int baseBrightness, int nightDimPercent) {
+            if (!isDaytime && nightDimPercent > 0) {
+                // Helligkeit um nightDimPercent reduzieren
+                int dimmed = baseBrightness - (baseBrightness * nightDimPercent / 100);
+                if (dimmed < 0) { dimmed = 0; }
+                setBrightness(dimmed);
+            } else {
+                // Tageszeit: normale Helligkeit wiederherstellen
+                setBrightness(baseBrightness);
             }
         }
 
@@ -265,18 +340,18 @@ class UpdateDisplay {
                 }
             }
 
-            if      (hour == 1)      myLedStrip->setGroupLEDs(59, 3, r, g, b);   // EIS
-            else if (hour == 2)      myLedStrip->setGroupLEDs(63, 4, r, g, b);   // ZWÖI
-            else if (hour == 3)      myLedStrip->setGroupLEDs(56, 3, r, g, b);   // DRÜ
-            else if (hour == 4)      myLedStrip->setGroupLEDs(72, 5, r, g, b);   // VIERI
-            else if (hour == 5)      myLedStrip->setGroupLEDs(67, 4, r, g, b);   // FÜFI
-            else if (hour == 6)      myLedStrip->setGroupLEDs(78, 6, r, g, b);   // SÄCHSI
-            else if (hour == 7)      myLedStrip->setGroupLEDs(84, 5, r, g, b);   // SIBNI
-            else if (hour == 8)      myLedStrip->setGroupLEDs(95, 5, r, g, b);   // ACHTI
-            else if (hour == 9)      myLedStrip->setGroupLEDs(91, 4, r, g, b);   // NÜNI
-            else if (hour == 10)     myLedStrip->setGroupLEDs(101, 4, r, g, b);  // ZÄNI
-            else if (hour == 11)     myLedStrip->setGroupLEDs(106, 4, r, g, b);  // EUFI
-            else if (hour == 12)     myLedStrip->setGroupLEDs(115, 6, r, g, b);  // ZWÖUFI
+            if      (hour == 1)  { myLedStrip->setGroupLEDs(59, 3, r, g, b); }  // EIS
+            else if (hour == 2)  { myLedStrip->setGroupLEDs(63, 4, r, g, b); }  // ZWÖI
+            else if (hour == 3)  { myLedStrip->setGroupLEDs(56, 3, r, g, b); }  // DRÜ
+            else if (hour == 4)  { myLedStrip->setGroupLEDs(72, 5, r, g, b); }  // VIERI
+            else if (hour == 5)  { myLedStrip->setGroupLEDs(67, 4, r, g, b); }  // FÜFI
+            else if (hour == 6)  { myLedStrip->setGroupLEDs(78, 6, r, g, b); }  // SÄCHSI
+            else if (hour == 7)  { myLedStrip->setGroupLEDs(84, 5, r, g, b); }  // SIBNI
+            else if (hour == 8)  { myLedStrip->setGroupLEDs(95, 5, r, g, b); }  // ACHTI
+            else if (hour == 9)  { myLedStrip->setGroupLEDs(91, 4, r, g, b); }  // NÜNI
+            else if (hour == 10) { myLedStrip->setGroupLEDs(101, 4, r, g, b); } // ZÄNI
+            else if (hour == 11) { myLedStrip->setGroupLEDs(106, 4, r, g, b); } // EUFI
+            else if (hour == 12) { myLedStrip->setGroupLEDs(115, 6, r, g, b); } // ZWÖUFI
 
             // Soundausgabe
             if (min == 0 && songPlayed == false) {

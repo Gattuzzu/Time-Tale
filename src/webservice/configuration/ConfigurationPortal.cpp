@@ -7,6 +7,7 @@
 #define NVS_KEY_SSID "wifi_ssid"
 #define NVS_KEY_PASSWORD "wifi_pass"
 #define NVS_KEY_TIMEOFFSET "time_offset"
+#define NVS_KEY_AUTODST "auto_dst"
 #define NVS_KEY_NTPSERVER "ntp_server"
 #define NVS_KEY_GOOGLE_ACCESS_TOKEN "google_token"
 #define NVS_KEY_WEATHER_INT "weather_int"
@@ -18,10 +19,13 @@
 #define NVS_KEY_TEXTCOLOR "text_color"
 #define NVS_KEY_LEDBRIGHTNESS "led_brightness"
 #define NVS_KEY_VOLUME "volume"
+#define NVS_KEY_NIGHT_DIM "night_dim"
+#define NVS_KEY_THUNDER_FLASHES "thund_flashes"
 
 // Standardwerte für die Konfiguration, falls noch nichts im NVS gespeichert ist.
 const char* DEFAULT_NTP_SERVER = "ntp.metas.ch";
 const int DEFAULT_TIME_OFFSET = 1; // MEZ
+const bool DEFAULT_AUTODST = true; // Automatische Sommer-/Winterzeit (MESZ/MEZ)
 const int DEFAULT_WEATHER_INTERVAL = 10; // Minuten
 const int DEFAULT_POLLEN_INTERVAL = 60; // Minuten
 const float DEFAULT_LONGITUDE = 0.0;
@@ -31,6 +35,8 @@ const int DEFAULT_OUTDOOR_TIME = 5; // Sekunden
 const uint32_t DEFAULT_TEXT_COLOR = 0xFFFFFF; // Weiss (CRGB::White)
 const int DEFAULT_BRIGHTNESS = 50; // Standard-Helligkeit (0-100)
 const int DEFAULT_VOLUME = 15; // Mitte des Bereichs
+const int DEFAULT_NIGHT_DIM = 30; // Standard-Nachtdimm-Prozentsatz (0-100)
+const int DEFAULT_THUNDER_FLASHES = 60; // Standardmässig 60x pro Stunde blitzen (0 = dauerhaft gelb)
 
 // HTML-Seite als PROGMEM String.
 // Enthält Platzhalter (z.B. %SSID%), die zur Laufzeit durch aktuelle Werte ersetzt werden.
@@ -121,8 +127,13 @@ const char PROGMEM INDEX_HTML_TEMPLATE[] = R"rawliteral(
             <input type="password" id="password" name="password" value=""><br>
 
             <h2>Weitere Einstellungen</h2>
-            <label for="timeOffset">Zeitverschiebung (Stunden, z.B. 1 für MEZ, 2 für MESZ):</label>
+            <label for="timeOffset">Basis-Zeitzone (Stunden relativ zu UTC, z.B. 1 für MEZ / Schweiz / Deutschland):</label>
             <input type="tel" id="timeOffset" name="timeOffset" value="%TIMEOFFSET%"><br>
+
+            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; cursor: pointer;">
+                <input type="checkbox" id="daylightSavingAutomatic" name="daylightSavingAutomatic" value="1" %AUTODST_CHECKED% style="width: 20px; height: 20px; margin-bottom: 0;">
+                <span>Automatische Sommer-/Winterzeit (MESZ/MEZ)</span>
+            </label>
 
             <label for="ntpServer">NTP Server (z.B. ntp.metas.ch):</label>
             <input type="text" id="ntpServer" name="ntpServer" value="%NTPSERVER%"><br>
@@ -163,6 +174,12 @@ const char PROGMEM INDEX_HTML_TEMPLATE[] = R"rawliteral(
 
             <label for="ledBrightness">LED Helligkeit (0-100): <span id="ledBrightnessValue">%LEDBRIGHTNESS%</span></label>
             <input type="range" id="ledBrightness" name="ledBrightness" min="0" max="100" value="%LEDBRIGHTNESS%" oninput="document.getElementById('ledBrightnessValue').innerText = this.value;"><br>
+
+            <label for="nightDimPercent">Nacht-Abdimmung (0 = kein Dimmen, 100 = ganz aus): <span id="nightDimPercentValue">%NIGHT_DIM%</span></label>
+            <input type="range" id="nightDimPercent" name="nightDimPercent" min="0" max="100" value="%NIGHT_DIM%" oninput="document.getElementById('nightDimPercentValue').innerText = this.value;"><br>
+
+            <label for="thunderFlashes">Gewitter-Blitze pro Stunde (0 = dauerhaft gelb, z.B. 60 = blau mit zufälligen Blitzen):</label>
+            <input type="number" id="thunderFlashes" name="thunderFlashes" min="0" max="3600" value="%THUNDER_FLASHES%"><br>
 
             <label for="volume">Lautstärke (0 = Stumm, 30 = Max): <span id="volumeValue">%VOLUME%</span></label>
             <input type="range" id="volume" name="volume" min="0" max="30" value="%VOLUME%" oninput="document.getElementById('volumeValue').innerText = this.value;"><br>
@@ -238,6 +255,19 @@ bool ConfigurationPortal::loadConfig(AppConfig& config) {
     config.wifiSsid = _preferences.getString(NVS_KEY_SSID, "");
     config.wifiPassword = _preferences.getString(NVS_KEY_PASSWORD, "");
     config.timeOffsetHours = _preferences.getInt(NVS_KEY_TIMEOFFSET, DEFAULT_TIME_OFFSET);
+    bool hasAutoDstKey = _preferences.isKey(NVS_KEY_AUTODST);
+    config.daylightSavingAutomatic = _preferences.getBool(NVS_KEY_AUTODST, DEFAULT_AUTODST);
+
+    // Automatische Migration: Falls bisher manuell Sommerzeit (2h) hinterlegt war und auto_dst noch nicht existierte,
+    // Basis-Offset auf 1h (MEZ) korrigieren und Auto-DST aktivieren.
+    if (!hasAutoDstKey && config.timeOffsetHours == 2) {
+        Logger::log(LogLevel::Info, "Automatische Migration: Basis-Zeitverschiebung von 2h auf 1h (MEZ) korrigiert und Auto-Sommerzeit aktiviert.");
+        config.timeOffsetHours = 1;
+        config.daylightSavingAutomatic = true;
+        _preferences.putInt(NVS_KEY_TIMEOFFSET, config.timeOffsetHours);
+        _preferences.putBool(NVS_KEY_AUTODST, config.daylightSavingAutomatic);
+    }
+
     config.ntpServer = _preferences.getString(NVS_KEY_NTPSERVER, DEFAULT_NTP_SERVER);
     config.googleAccessToken = _preferences.getString(NVS_KEY_GOOGLE_ACCESS_TOKEN, "");
     config.weatherUpdateIntervalMin = _preferences.getInt(NVS_KEY_WEATHER_INT, DEFAULT_WEATHER_INTERVAL);
@@ -249,6 +279,8 @@ bool ConfigurationPortal::loadConfig(AppConfig& config) {
     config.textColorCRGB = _preferences.getUInt(NVS_KEY_TEXTCOLOR, DEFAULT_TEXT_COLOR);
     config.ledBrightness = _preferences.getInt(NVS_KEY_LEDBRIGHTNESS, DEFAULT_BRIGHTNESS);
     config.volume = _preferences.getInt(NVS_KEY_VOLUME, DEFAULT_VOLUME);
+    config.nightDimPercent = _preferences.getInt(NVS_KEY_NIGHT_DIM, DEFAULT_NIGHT_DIM);
+    config.thunderFlashesPerHour = _preferences.getInt(NVS_KEY_THUNDER_FLASHES, DEFAULT_THUNDER_FLASHES);
 
     // Prüfe, ob eine WLAN-SSID gefunden wurde, um zu bestimmen, ob eine "gespeicherte" Konfiguration existiert.
     if (config.wifiSsid.length() > 0) {
@@ -265,6 +297,7 @@ bool ConfigurationPortal::saveConfig(const AppConfig& config) {
     _preferences.putString(NVS_KEY_SSID, config.wifiSsid);
     _preferences.putString(NVS_KEY_PASSWORD, config.wifiPassword);
     _preferences.putInt(NVS_KEY_TIMEOFFSET, config.timeOffsetHours);
+    _preferences.putBool(NVS_KEY_AUTODST, config.daylightSavingAutomatic);
     _preferences.putString(NVS_KEY_NTPSERVER, config.ntpServer);
     _preferences.putString(NVS_KEY_GOOGLE_ACCESS_TOKEN, config.googleAccessToken);
     _preferences.putInt(NVS_KEY_WEATHER_INT, config.weatherUpdateIntervalMin);
@@ -276,6 +309,8 @@ bool ConfigurationPortal::saveConfig(const AppConfig& config) {
     _preferences.putUInt(NVS_KEY_TEXTCOLOR, config.textColorCRGB);
     _preferences.putInt(NVS_KEY_LEDBRIGHTNESS, config.ledBrightness);
     _preferences.putInt(NVS_KEY_VOLUME, config.volume);
+    _preferences.putInt(NVS_KEY_NIGHT_DIM, config.nightDimPercent);
+    _preferences.putInt(NVS_KEY_THUNDER_FLASHES, config.thunderFlashesPerHour);
 
     Logger::log(LogLevel::Info, "Konfiguration erfolgreich in NVS geschrieben.");
     return true; // put-Operationen geben keinen direkten Fehler zurück, Annahme ist Erfolg.
@@ -296,6 +331,7 @@ void ConfigurationPortal::handleRoot() {
 
     // Ersetze Platzhalter für weitere Einstellungen
     html.replace("%TIMEOFFSET%", String(currentConfig.timeOffsetHours));
+    html.replace("%AUTODST_CHECKED%", currentConfig.daylightSavingAutomatic ? "checked" : "");
     html.replace("%NTPSERVER%", currentConfig.ntpServer);
 
     // Google Access Token soll leer bleiben, da dieses wie ein Passwort zu behandeln ist.
@@ -311,6 +347,8 @@ void ConfigurationPortal::handleRoot() {
     html.replace("%INDOOR_TIME%", String(currentConfig.indoorTempDisplayTimeSec));
     html.replace("%OUTDOOR_TIME%", String(currentConfig.outdoorTempDisplayTimeSec));
     html.replace("%LEDBRIGHTNESS%", String(currentConfig.ledBrightness));
+    html.replace("%NIGHT_DIM%", String(currentConfig.nightDimPercent));
+    html.replace("%THUNDER_FLASHES%", String(currentConfig.thunderFlashesPerHour));
     html.replace("%VOLUME%", String(currentConfig.volume));
 
     // Setze das "selected"-Attribut für die aktuell gespeicherte Farbe
@@ -323,16 +361,16 @@ void ConfigurationPortal::handleRoot() {
     selectedColorHex.toUpperCase(); // Sicherstellen, dass die Hex-Zeichen Grossbuchstaben sind
     
     // Vergleiche und setze das "selected"-Attribut entsprechend
-    if (selectedColorHex == "0XFF0000") html.replace("%COLOR_FF0000_SELECTED%", "selected");
-    else if (selectedColorHex == "0X00FF00") html.replace("%COLOR_00FF00_SELECTED%", "selected");
-    else if (selectedColorHex == "0X0000FF") html.replace("%COLOR_0000FF_SELECTED%", "selected");
-    else if (selectedColorHex == "0XFFFFFF") html.replace("%COLOR_FFFFFF_SELECTED%", "selected");
-    else if (selectedColorHex == "0XF94D00") html.replace("%COLOR_F94D00_SELECTED%", "selected");
-    else if (selectedColorHex == "0X7F00FF") html.replace("%COLOR_7F00FF_SELECTED%", "selected");
-    else if (selectedColorHex == "0X00FFFF") html.replace("%COLOR_00FFFF_SELECTED%", "selected");
-    else if (selectedColorHex == "0XFFFF00") html.replace("%COLOR_FFFF00_SELECTED%", "selected");
-    else if (selectedColorHex == "0XFF007F") html.replace("%COLOR_FF007F_SELECTED%", "selected");
-    else html.replace("%COLOR_FFFFFF_SELECTED%", "selected"); // Fallback zu Weiss, falls unbekannte Farbe
+    if (selectedColorHex == "0XFF0000")      { html.replace("%COLOR_FF0000_SELECTED%", "selected"); }
+    else if (selectedColorHex == "0X00FF00") { html.replace("%COLOR_00FF00_SELECTED%", "selected"); }
+    else if (selectedColorHex == "0X0000FF") { html.replace("%COLOR_0000FF_SELECTED%", "selected"); }
+    else if (selectedColorHex == "0XFFFFFF") { html.replace("%COLOR_FFFFFF_SELECTED%", "selected"); }
+    else if (selectedColorHex == "0XF94D00") { html.replace("%COLOR_F94D00_SELECTED%", "selected"); }
+    else if (selectedColorHex == "0X7F00FF") { html.replace("%COLOR_7F00FF_SELECTED%", "selected"); }
+    else if (selectedColorHex == "0X00FFFF") { html.replace("%COLOR_00FFFF_SELECTED%", "selected"); }
+    else if (selectedColorHex == "0XFFFF00") { html.replace("%COLOR_FFFF00_SELECTED%", "selected"); }
+    else if (selectedColorHex == "0XFF007F") { html.replace("%COLOR_FF007F_SELECTED%", "selected"); }
+    else { html.replace("%COLOR_FFFFFF_SELECTED%", "selected"); } // Fallback zu Weiss, falls unbekannte Farbe
     
     // Logik für die Auswahl der Textfarbe im Dropdown-Menü
     // alle anderen temporären tags entfernen.
@@ -373,6 +411,9 @@ void ConfigurationPortal::handleSaveConfig() {
     if (_server.hasArg("timeOffset")) {
         newConfig.timeOffsetHours = _server.arg("timeOffset").toInt();
     }
+    // Checkbox: Wenn sie im Formular angehakt ist, wird der Parameter übermittelt
+    newConfig.daylightSavingAutomatic = _server.hasArg("daylightSavingAutomatic");
+
     if (_server.hasArg("ntpServer")) {
         newConfig.ntpServer = _server.arg("ntpServer");
     }
@@ -412,20 +453,32 @@ void ConfigurationPortal::handleSaveConfig() {
     if (_server.hasArg("ledBrightness")) {
         newConfig.ledBrightness = _server.arg("ledBrightness").toInt();
         // Sicherstellen, dass die Helligkeit im gültigen Bereich bleibt (0-100)
-        if (newConfig.ledBrightness < 0) newConfig.ledBrightness = 0;
-        if (newConfig.ledBrightness > 100) newConfig.ledBrightness = 100;
+        if (newConfig.ledBrightness < 0)   { newConfig.ledBrightness = 0; }
+        if (newConfig.ledBrightness > 100) { newConfig.ledBrightness = 100; }
+    }
+    if (_server.hasArg("nightDimPercent")) {
+        newConfig.nightDimPercent = _server.arg("nightDimPercent").toInt();
+        // Sicherstellen, dass der Nachtdimm-Wert im gültigen Bereich bleibt (0-100)
+        if (newConfig.nightDimPercent < 0)   { newConfig.nightDimPercent = 0; }
+        if (newConfig.nightDimPercent > 100) { newConfig.nightDimPercent = 100; }
+    }
+    if (_server.hasArg("thunderFlashes")) {
+        newConfig.thunderFlashesPerHour = _server.arg("thunderFlashes").toInt();
+        if (newConfig.thunderFlashesPerHour < 0)    { newConfig.thunderFlashesPerHour = 0; }
+        if (newConfig.thunderFlashesPerHour > 3600) { newConfig.thunderFlashesPerHour = 3600; }
     }
     if (_server.hasArg("volume")) {
         newConfig.volume = _server.arg("volume").toInt();
         // Sicherstellen, dass die Lautstärke im gültigen Bereich bleibt (0-30)
-        if (newConfig.volume < 0) newConfig.volume = 0;
-        if (newConfig.volume > 30) newConfig.volume = 30;
+        if (newConfig.volume < 0)  { newConfig.volume = 0; }
+        if (newConfig.volume > 30) { newConfig.volume = 30; }
     }
 
     // Logge die empfangenen Daten zur Überprüfung
     Logger::log(LogLevel::Info, "Empfangene Konfigurationsdaten:");
     Logger::log(LogLevel::Info, "  SSID: " + newConfig.wifiSsid);
-    Logger::log(LogLevel::Info, "  Zeitverschiebung: " + String(newConfig.timeOffsetHours));
+    Logger::log(LogLevel::Info, "  Basis-Zeitverschiebung: " + String(newConfig.timeOffsetHours) + "h");
+    Logger::log(LogLevel::Info, "  Auto-Sommerzeit: " + String(newConfig.daylightSavingAutomatic ? "Aktiv" : "Inaktiv"));
     Logger::log(LogLevel::Info, "  NTP Server: " + newConfig.ntpServer);
     Logger::log(LogLevel::Info, "  Google Access Token Länge: " + String(newConfig.googleAccessToken.length()));
     Logger::log(LogLevel::Info, "  Wetter-Intervall: " + String(newConfig.weatherUpdateIntervalMin) + " min");
@@ -436,6 +489,8 @@ void ConfigurationPortal::handleSaveConfig() {
     Logger::log(LogLevel::Info, "  Aussentemp. Anzeigedauer: " + String(newConfig.outdoorTempDisplayTimeSec) + " s");
     Logger::log(LogLevel::Info, "  Textfarbe: 0x" + String(newConfig.textColorCRGB, HEX));
     Logger::log(LogLevel::Info, "  LED Helligkeit: " + String(newConfig.ledBrightness));
+    Logger::log(LogLevel::Info, "  Nacht-Abdimmung: " + String(newConfig.nightDimPercent) + "%");
+    Logger::log(LogLevel::Info, "  Gewitter-Blitze/Stunde: " + String(newConfig.thunderFlashesPerHour));
     Logger::log(LogLevel::Info, "  Lautstärke: " + String(newConfig.volume));
 
 

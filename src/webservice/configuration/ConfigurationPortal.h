@@ -19,7 +19,8 @@ class Logger;
 struct AppConfig {
     String wifiSsid;                  // WLAN SSID
     String wifiPassword;              // WLAN Passwort
-    int timeOffsetHours;              // Zeitverschiebung in Stunden (z.B. 1 für MEZ, 2 für MESZ)
+    int timeOffsetHours;              // Basis-Zeitverschiebung in Stunden (z.B. 1 für MEZ)
+    bool daylightSavingAutomatic;     // Automatische Sommer-/Winterzeit-Umschaltung (MESZ/MEZ)
     String ntpServer;                 // NTP Server Adresse als String
     String googleAccessToken;         // Access Token für API von Google API's
     int weatherUpdateIntervalMin;     // Update Intervall für das Wetter-API in Minuten
@@ -31,6 +32,8 @@ struct AppConfig {
     uint32_t textColorCRGB;           // Farbe des Textes für die LED-Anzeige (als 0xRRGGBB Hex-Wert)
     int ledBrightness;                // Helligkeit der LED-Anzeige (0-100)
     int volume;                       // Lautstärke in Schritten von 0-30 (0 = Mute)
+    int nightDimPercent;              // Abdimmung bei Nacht in % (0 = kein Dimmen, 100 = ganz aus)
+    int thunderFlashesPerHour;        // Gewitter-Blitze pro Stunde (0 = dauerhaft gelb, >0 = blau leuchtend mit randomisierten gelben Blitzen)
 };
 
 class ConfigurationPortal {
