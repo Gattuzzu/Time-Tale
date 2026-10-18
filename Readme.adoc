@@ -20,9 +20,15 @@ Hauptfunktionen:
 
 ** Sprachausgabe: Die Uhrzeit wird zur vollen Stunde per Lautsprecher angegeben.
 
-** Wetteranzeige: Netzwerkbasierte Wetterdaten werden mithilfe selbsterklärender Symbole (Sonne, Wolke, Regen) visualisiert.
+** Wetteranzeige & Tag/Nacht-Modus: Netzwerkbasierte Wetterdaten (Google Maps Platform Weather API) werden visualisiert. Bei Nacht passen sich die Wettersymbole an (z. B. weisser Mond statt gelbe Sonne) und alle LEDs können automatisch um einen konfigurierbaren Prozentsatz gedimmt werden.
 
-** Benutzerfreundlichkeit: Die Steuerung ist sowohl über einfache physische Tasten als auch optional über eine App oder ein Webinterface möglich.
+** Dynamischer Gewitter-Effekt: Bei Gewitter leuchtet das Icon standardmässig blau und blitzt in zufälligen Zeitabständen gelb auf (konfigurierbare Blitzanzahl pro Stunde).
+
+** Automatische Sommer-/Winterzeit (MESZ/MEZ): Automatische Zeitumstellung nach europäischem Standard (letzter Sonntag im März/Oktober), im Webportal konfigurierbar.
+
+** Robustes Zeit- & Netzwerkmanagement: Die Uhrzeit läuft auch bei temporärem Ausfall der NTP-Verbindung kontinuierlich weiter. Bei Verbindungsverlust versucht die Uhr im AP-Modus alle 5 Minuten automatisch, die WLAN-Verbindung wiederherzustellen.
+
+** Benutzerfreundlichkeit: Die Steuerung ist sowohl über einfache physische Tasten als auch über ein integriertes Webportal (Access Point oder lokales WLAN) möglich.
 
 ** Modernes Design: Alle Komponenten sind in einem kompakten, wohnraumtauglichen Gehäuse untergebracht, das Funktionalität und Ästhetik vereint.
 
@@ -31,12 +37,9 @@ Hauptfunktionen:
 
 ### Sichere Verbindung zu Google API herstellen
 
-Um eine Sichere Verbindung zu Google herstellen zu können, muss man SSL aktivieren. 
-Um dies mit der Bibliothek machen zu können, muss man das Zertifikat von Google angeben.
-Um das Zertifikat zu erhalten, bzw. das Zertifikat soweit anzupassen, damit es funktioniert helfen dieser Infos:
-
-* https://forum.arduino.cc/t/arduino-uno-r4-wifi-ssl-will-not-connect-to-api-netatmo-and-others/1254103/2[Arduino UNO R4 Wifi SSL will not connect to api.netatmo and others]
-* https://unreeeal.github.io/ssl_esp.html[Convert SSL Certificate to Arduino ESP Variable]
+Für die Wetter- und Pollendaten wird eine HTTPS-Verbindung zu den Google APIs (`weather.googleapis.com` und `pollen.googleapis.com`) aufgebaut.
+Im Google Cloud Projekt muss die **Google Maps Platform Weather API** und **Pollen API** aktiviert sein und ein gültiger API-Schlüssel im Webportal hinterlegt werden.
+Die SSL-Verbindung wird direkt auf dem ESP32 verschlüsselt hergestellt; ein manuelles Einpflegen von Zertifikaten ist nicht mehr erforderlich.
 
 
 ### MP3-Player
