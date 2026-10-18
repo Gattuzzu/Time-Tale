@@ -7,11 +7,11 @@ bool WeatherClient::getCurrentConditions(float latitude, float longitude, Weathe
 
     String path = "/v1/currentConditions:lookup?key=";
     path += _apiKey;
-    path += "&languageCode=CH&location.latitude=";
+    path += "&languageCode=de-CH&location.latitude=";
     path += String(latitude, 6); // 6 Dezimalstellen für Präzision
     path += "&location.longitude=";
     path += String(longitude, 6);
-    path += "&unitsSystem=METRIC&alt=json";
+    path += "&unitsSystem=METRIC";
 
     JsonDocument doc;
     if (!sendGetRequest(path, doc)) { // Aufruf der Basisklassenmethode
