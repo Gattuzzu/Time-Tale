@@ -51,3 +51,20 @@ Somit muss man alle Songs einzeln in der richtigen Reihenfolge auf die SD-Karte 
 Der Arduino Nano esp32 kann sich nur mit W-Lan im 2,4 GHz bereich verbinden.
 Somit muss darauf geachtet werden, dass das gewünschte W-Lan im 2,4 GHz Band zur verfügung steht.
 Auf meinem Handy (Galaxy A55) musste ich extra den Hotspot umstellen. 
+
+
+# ToDo's & Ideen:
+
+- Die Textanzeige über einen String abdecken, welcher genau so wie die Deckplatte ist.
+  Dann kann anschliessend über den string.getIndexOf("isch") der Start Index geholt werden. 
+  Dadurch kann die Frontplatte angepasst werden, ohne dass man gross den Code ändern muss.
+
+- Punkte um Minuten anzuzeigen
+
+- Strom ausrechnen und entsprechend die Led's etwas Dimmen. -> Dadurch kann ein deutlich kleiners Netzteil genutzt werden.
+
+- Funktionen:
+  - Neujahr herunterzählen wo die Zahl über die gesammte Anzeige gemacht wird.
+  - 1. August
+  - Geburtstag
+
