@@ -53,7 +53,7 @@ Somit muss darauf geachtet werden, dass das gewünschte W-Lan im 2,4 GHz Band zu
 Auf meinem Handy (Galaxy A55) musste ich extra den Hotspot umstellen. 
 
 
-# ToDo's & Ideen:
+## ToDo's & Ideen:
 
 - Die Textanzeige über einen String abdecken, welcher genau so wie die Deckplatte ist.
   Dann kann anschliessend über den string.getIndexOf("isch") der Start Index geholt werden. 
