@@ -17,47 +17,47 @@ void WeatherData::reset() {
 
 WeatherConditionType WeatherData::weatherConditionStringToType(const String& typeString){
     // Map the string to the enum value
-    if      (typeString == "TYPE_UNSPECIFIED")        return WeatherConditionType::UNKNOWN;
-    else if (typeString == "CLEAR")                   return WeatherConditionType::CLEAR;
-    else if (typeString == "MOSTLY_CLEAR")            return WeatherConditionType::CLEAR;
-    else if (typeString == "PARTLY_CLOUDY")           return WeatherConditionType::PARTLY_CLOUDY;
-    else if (typeString == "MOSTLY_CLOUDY")           return WeatherConditionType::CLOUDY;
-    else if (typeString == "CLOUDY")                  return WeatherConditionType::CLOUDY;
-    else if (typeString == "WINDY")                   return WeatherConditionType::PARTLY_CLOUDY;
-    else if (typeString == "WIND_AND_RAIN")           return WeatherConditionType::RAIN;
-    else if (typeString == "LIGHT_RAIN_SHOWERS")      return WeatherConditionType::RAIN;
-    else if (typeString == "CHANCE_OF_SHOWERS")       return WeatherConditionType::CLOUDY;
-    else if (typeString == "SCATTERED_SHOWERS")       return WeatherConditionType::RAIN;
-    else if (typeString == "RAIN_SHOWERS")            return WeatherConditionType::RAIN;
-    else if (typeString == "HEAVY_RAIN_SHOWERS")      return WeatherConditionType::RAIN;
-    else if (typeString == "LIGHT_TO_MODERATE_RAIN")  return WeatherConditionType::RAIN;
-    else if (typeString == "MODERATE_TO_HEAVY_RAIN")  return WeatherConditionType::RAIN;
-    else if (typeString == "RAIN")                    return WeatherConditionType::RAIN;
-    else if (typeString == "LIGHT_RAIN")              return WeatherConditionType::RAIN;
-    else if (typeString == "HEAVY_RAIN")              return WeatherConditionType::RAIN;
-    else if (typeString == "RAIN_PERIODICALLY_HEAVY") return WeatherConditionType::RAIN;
-    else if (typeString == "LIGHT_SNOW_SHOWERS")      return WeatherConditionType::SNOW;
-    else if (typeString == "CHANCE_OF_SNOW_SHOWERS")  return WeatherConditionType::CLOUDY;
-    else if (typeString == "SCATTERED_SNOW_SHOWERS")  return WeatherConditionType::SNOW;
-    else if (typeString == "SNOW_SHOWERS")            return WeatherConditionType::SNOW;
-    else if (typeString == "HEAVY_SNOW_SHOWERS")      return WeatherConditionType::SNOW;
-    else if (typeString == "LIGHT_TO_MODERATE_SNOW")  return WeatherConditionType::SNOW;
-    else if (typeString == "MODERATE_TO_HEAVY_SNOW")  return WeatherConditionType::SNOW;
-    else if (typeString == "SNOW")                    return WeatherConditionType::SNOW;
-    else if (typeString == "LIGHT_SNOW")              return WeatherConditionType::SNOW;
-    else if (typeString == "HEAVY_SNOW")              return WeatherConditionType::SNOW;
-    else if (typeString == "SNOWSTORM")               return WeatherConditionType::SNOW;
-    else if (typeString == "SNOW_PERIODICALLY_HEAVY") return WeatherConditionType::SNOW;
-    else if (typeString == "HEAVY_SNOW_STORM")        return WeatherConditionType::SNOW;
-    else if (typeString == "BLOWING_SNOW")            return WeatherConditionType::SNOW;
-    else if (typeString == "RAIN_AND_SNOW")           return WeatherConditionType::SNOW;
-    else if (typeString == "HAIL")                    return WeatherConditionType::THUNDERSTORM;
-    else if (typeString == "HAIL_SHOWERS")            return WeatherConditionType::THUNDERSTORM;
-    else if (typeString == "THUNDERSTORM")            return WeatherConditionType::THUNDERSTORM;
-    else if (typeString == "THUNDERSHOWER")           return WeatherConditionType::THUNDERSTORM;
-    else if (typeString == "LIGHT_THUNDERSTORM_RAIN") return WeatherConditionType::THUNDERSTORM;
-    else if (typeString == "SCATTERED_THUNDERSTORMS") return WeatherConditionType::THUNDERSTORM;
-    else if (typeString == "HEAVY_THUNDERSTORM")      return WeatherConditionType::THUNDERSTORM;
+    if      (typeString == "TYPE_UNSPECIFIED")        { return WeatherConditionType::UNKNOWN; }
+    else if (typeString == "CLEAR")                   { return WeatherConditionType::CLEAR; }
+    else if (typeString == "MOSTLY_CLEAR")            { return WeatherConditionType::CLEAR; }
+    else if (typeString == "PARTLY_CLOUDY")           { return WeatherConditionType::PARTLY_CLOUDY; }
+    else if (typeString == "MOSTLY_CLOUDY")           { return WeatherConditionType::CLOUDY; }
+    else if (typeString == "CLOUDY")                  { return WeatherConditionType::CLOUDY; }
+    else if (typeString == "WINDY")                   { return WeatherConditionType::PARTLY_CLOUDY; }
+    else if (typeString == "WIND_AND_RAIN")           { return WeatherConditionType::RAIN; }
+    else if (typeString == "LIGHT_RAIN_SHOWERS")      { return WeatherConditionType::RAIN; }
+    else if (typeString == "CHANCE_OF_SHOWERS")       { return WeatherConditionType::CLOUDY; }
+    else if (typeString == "SCATTERED_SHOWERS")       { return WeatherConditionType::RAIN; }
+    else if (typeString == "RAIN_SHOWERS")            { return WeatherConditionType::RAIN; }
+    else if (typeString == "HEAVY_RAIN_SHOWERS")      { return WeatherConditionType::RAIN; }
+    else if (typeString == "LIGHT_TO_MODERATE_RAIN")  { return WeatherConditionType::RAIN; }
+    else if (typeString == "MODERATE_TO_HEAVY_RAIN")  { return WeatherConditionType::RAIN; }
+    else if (typeString == "RAIN")                    { return WeatherConditionType::RAIN; }
+    else if (typeString == "LIGHT_RAIN")              { return WeatherConditionType::RAIN; }
+    else if (typeString == "HEAVY_RAIN")              { return WeatherConditionType::RAIN; }
+    else if (typeString == "RAIN_PERIODICALLY_HEAVY") { return WeatherConditionType::RAIN; }
+    else if (typeString == "LIGHT_SNOW_SHOWERS")      { return WeatherConditionType::SNOW; }
+    else if (typeString == "CHANCE_OF_SNOW_SHOWERS")  { return WeatherConditionType::CLOUDY; }
+    else if (typeString == "SCATTERED_SNOW_SHOWERS")  { return WeatherConditionType::SNOW; }
+    else if (typeString == "SNOW_SHOWERS")            { return WeatherConditionType::SNOW; }
+    else if (typeString == "HEAVY_SNOW_SHOWERS")      { return WeatherConditionType::SNOW; }
+    else if (typeString == "LIGHT_TO_MODERATE_SNOW")  { return WeatherConditionType::SNOW; }
+    else if (typeString == "MODERATE_TO_HEAVY_SNOW")  { return WeatherConditionType::SNOW; }
+    else if (typeString == "SNOW")                    { return WeatherConditionType::SNOW; }
+    else if (typeString == "LIGHT_SNOW")              { return WeatherConditionType::SNOW; }
+    else if (typeString == "HEAVY_SNOW")              { return WeatherConditionType::SNOW; }
+    else if (typeString == "SNOWSTORM")               { return WeatherConditionType::SNOW; }
+    else if (typeString == "SNOW_PERIODICALLY_HEAVY") { return WeatherConditionType::SNOW; }
+    else if (typeString == "HEAVY_SNOW_STORM")        { return WeatherConditionType::SNOW; }
+    else if (typeString == "BLOWING_SNOW")            { return WeatherConditionType::SNOW; }
+    else if (typeString == "RAIN_AND_SNOW")           { return WeatherConditionType::SNOW; }
+    else if (typeString == "HAIL")                    { return WeatherConditionType::THUNDERSTORM; }
+    else if (typeString == "HAIL_SHOWERS")            { return WeatherConditionType::THUNDERSTORM; }
+    else if (typeString == "THUNDERSTORM")            { return WeatherConditionType::THUNDERSTORM; }
+    else if (typeString == "THUNDERSHOWER")           { return WeatherConditionType::THUNDERSTORM; }
+    else if (typeString == "LIGHT_THUNDERSTORM_RAIN") { return WeatherConditionType::THUNDERSTORM; }
+    else if (typeString == "SCATTERED_THUNDERSTORMS") { return WeatherConditionType::THUNDERSTORM; }
+    else if (typeString == "HEAVY_THUNDERSTORM")      { return WeatherConditionType::THUNDERSTORM; }
 
     return WeatherConditionType::UNKNOWN; // Fallback
 }

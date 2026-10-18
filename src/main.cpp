@@ -183,8 +183,8 @@ void updateSensorValues(unsigned long &lastApiCall, boolean forceUpdate){
         // Anzeigen der Luftqualität
         float iaqValue = airQuality->getIAQ();
         // Sicherstellen, dass der IAQ-Wert im gültigen Bereich liegt
-        if (iaqValue < 0.0) iaqValue = 0.0;
-        if (iaqValue > 100.0) iaqValue = 100.0;
+        if (iaqValue < 0.0) { iaqValue = 0.0; }
+        if (iaqValue > 100.0) { iaqValue = 100.0; }
         
         // Farben definieren
         updateDisplay->updateAirQuality(iaqValue);
@@ -217,7 +217,7 @@ void i2cBusScan(){
     {
       Serial.print("I2C device found at address 0x");
       if (address<16)
-        Serial.print("0");
+        { Serial.print("0"); }
       Serial.print(address,HEX);
       Serial.println("  !");
 
@@ -227,14 +227,15 @@ void i2cBusScan(){
     {
       Serial.print("Unknown error at address 0x");
       if (address<16)
-        Serial.print("0");
+        { Serial.print("0"); }
       Serial.println(address,HEX);
     }
   }
-  if (nDevices == 0)
+  if (nDevices == 0) {
     Serial.println("No I2C devices found\n");
-  else
-  Serial.print(nDevices);
+  } else {
+    Serial.print(nDevices);
+  }
   Serial.print(" gefunden.");
   Serial.println("done\n");
 }
@@ -655,6 +656,8 @@ void loop() {
   if (!menuIsActiv){
     if (currentState == STATE_NORMAL_OPERATION) {
       if (showingIndoor) {
+        // Helligkeit auf Tageswert zurücksetzen (Innentemperatur-Ansicht)
+        updateDisplay->setBrightness(currentDeviceConfig.ledBrightness);
         updateSensorValues(lastSensorCall); // Zeigt Innentemperatur/Feuchtigkeit
         if (millis() - showDisplayValuesTimer >= indoorDisplayTimeMs) {
           showingIndoor = false;
@@ -662,7 +665,8 @@ void loop() {
         }
       } else {
         // Zeigt Aussentemperatur/Wetterdaten
-        updateDisplay->updateWeather(currentWeatherData.weatherType);
+        updateDisplay->updateWeather(currentWeatherData.weatherType, currentWeatherData.isDaytime);
+        updateDisplay->applyNightDim(currentWeatherData.isDaytime, currentDeviceConfig.ledBrightness, currentDeviceConfig.nightDimPercent);
         updateDisplay->updateTemperature(currentWeatherData.temperature.degrees);
         updateDisplay->updateTempLED(false); // Annahme: false bedeutet Aussentemp-LED
         updateDisplay->updateHumidity(currentWeatherData.relativeHumidity);

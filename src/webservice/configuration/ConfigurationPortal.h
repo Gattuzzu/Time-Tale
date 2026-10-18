@@ -31,6 +31,7 @@ struct AppConfig {
     uint32_t textColorCRGB;           // Farbe des Textes für die LED-Anzeige (als 0xRRGGBB Hex-Wert)
     int ledBrightness;                // Helligkeit der LED-Anzeige (0-100)
     int volume;                       // Lautstärke in Schritten von 0-30 (0 = Mute)
+    int nightDimPercent;              // Abdimmung bei Nacht in % (0 = kein Dimmen, 100 = ganz aus)
 };
 
 class ConfigurationPortal {
