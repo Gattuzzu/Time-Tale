@@ -35,13 +35,15 @@ bool NTPTimeSync::begin() {
   }
 }
 
-// Implementierung der update() Methode (unverändert)
+// Implementierung der update() Methode
 void NTPTimeSync::update() {
   if (WiFi.status() == WL_CONNECTED) {
     _NtpClient.update();
-  } else {
-    Logger::log(LogLevel::Error, "NTPTimeSync: WLAN nicht verbunden, Zeit-Update übersprungen.");
   }
+}
+
+bool NTPTimeSync::isTimeSet() {
+  return _NtpClient.isTimeSet();
 }
 
 void NTPTimeSync::setTimeOffset(long timeOffset){

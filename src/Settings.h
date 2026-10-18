@@ -7,7 +7,7 @@
 #define MENU_OPEN_TIME 8000 // 10 Sekunden
 
 // NTP Konfiguration
-#define UPDATE_INTERVALL 60000 // 1 Minute
+#define UPDATE_INTERVALL 900000UL // 15 Minuten (15 * 60 * 1000 ms)
 
 // WLAN Reconnect Konfiguration
 #define WIFI_RECONNECT_INTERVAL 300000UL // 5 Minuten (5 * 60 * 1000 ms)

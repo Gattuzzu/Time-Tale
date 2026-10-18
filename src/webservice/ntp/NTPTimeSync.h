@@ -25,6 +25,7 @@ public:
 
   int getHour();
   int getMin();
+  bool isTimeSet();
 private:
   NTPTimeSync(const char* ntpServer, long timeOffset, long updateInterval);
   NTPTimeSync(const NTPTimeSync&) = delete;

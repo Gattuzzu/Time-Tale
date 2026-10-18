@@ -652,7 +652,15 @@ void loop() {
   // Menu Aufruf
   showMenu(lastIPAddressPart, lastMenuChangeFromUser);
 
-  if (!menuIsActiv){
+  if (!menuIsActiv) {
+    // Zeit aktualisieren (falls WLAN da ist, synchronisiert NTPClient; falls nicht, läuft die interne Zeit per millis() weiter)
+    NTPTimeSync::getInstance().update();
+
+    // Sobald die Zeit mindestens einmal synchronisiert wurde, die Uhrzeit kontinuierlich anzeigen
+    if (NTPTimeSync::getInstance().isTimeSet()) {
+      updateDisplay->updateTime(NTPTimeSync::getInstance().getHour(), NTPTimeSync::getInstance().getMin(), currentDeviceConfig.volume > 0);
+    }
+
     if (currentState == STATE_NORMAL_OPERATION) {
       if (showingIndoor) {
         // Helligkeit auf Tageswert zurücksetzen (Innentemperatur-Ansicht)
@@ -748,23 +756,8 @@ void loop() {
           break; // Sofortiger Wechsel des Zustands
       }
 
-      if (!menuIsActiv){
-        // --- Dein normaler Betriebs-Code, der nur bei bestehender WLAN-Verbindung läuft ---
-        NTPTimeSync::getInstance().update(); // Zeit aktualisieren
-        updateDisplay->updateTime(NTPTimeSync::getInstance().getHour(), NTPTimeSync::getInstance().getMin(), currentDeviceConfig.volume > 0); // Den Song nur Abspielen, wenn die Lautstärke > 0 ist.
-      }
-
       updateWeatherApi(lastApiCallWeather);
       updatePollenApi(lastApiCallPollen);
-
-      // Optional: Zeit alle Sekunde ausgeben
-      // static unsigned long lastTimePrint = 0;
-      // if (millis() - lastTimePrint >= 1000) {
-      //     lastTimePrint = millis();
-      //     Serial.println("Mills: " + String(lastTimePrint));
-      //     Serial.println("Aktuelle Zeit: " + NTPTimeSync::getInstance().getFormattedTime());
-      //     delay(5000);
-      // }
       break;
 
     case STATE_WIFI_CONNECTION_LOST:
