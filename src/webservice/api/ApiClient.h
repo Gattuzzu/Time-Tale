@@ -26,8 +26,8 @@ protected:
     ApiClient(const ApiClient&) = delete;
     ApiClient& operator=(const ApiClient&) = delete;
 
-    const char* _host;
-    const char* _apiKey;
+    String _host;
+    String _apiKey;
     WiFiClientSecure _client; // Für HTTPS-Verbindungen
 
     // Gemeinsame Methode zum Senden einer GET-Anfrage und Empfangen der JSON-Antwort

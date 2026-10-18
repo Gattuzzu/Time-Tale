@@ -31,13 +31,17 @@ bool WeatherClient::parseWeatherJson(JsonDocument& doc, WeatherData& outWeatherD
 
     // 1. Temperatur (aus "temperature" Objekt)
     outWeatherData.temperature.degrees = doc["temperature"]["degrees"] | 0.0f;
-    outWeatherData.temperature.unit = doc["temperature"]["unit"].as<String>();
+    if (!doc["temperature"]["unit"].isNull()) {
+        outWeatherData.temperature.unit = doc["temperature"]["unit"].as<String>();
+    } else {
+        outWeatherData.temperature.unit = "CELSIUS";
+    }
 
     // 2. Luftfeuchtigkeit (aus "relativeHumidity")
     outWeatherData.relativeHumidity = doc["relativeHumidity"] | 0.0f;
 
     // 3. Wetterart als Enum (aus "weatherCondition.type")
-    if (!doc["weatherCondition"].isNull()) {
+    if (!doc["weatherCondition"].isNull() && !doc["weatherCondition"]["type"].isNull()) {
         String typeString = doc["weatherCondition"]["type"].as<String>();
         outWeatherData.weatherType = WeatherData::weatherConditionStringToType(typeString);
     } else {
