@@ -7,6 +7,7 @@
 #define NVS_KEY_SSID "wifi_ssid"
 #define NVS_KEY_PASSWORD "wifi_pass"
 #define NVS_KEY_TIMEOFFSET "time_offset"
+#define NVS_KEY_AUTODST "auto_dst"
 #define NVS_KEY_NTPSERVER "ntp_server"
 #define NVS_KEY_GOOGLE_ACCESS_TOKEN "google_token"
 #define NVS_KEY_WEATHER_INT "weather_int"
@@ -24,6 +25,7 @@
 // Standardwerte für die Konfiguration, falls noch nichts im NVS gespeichert ist.
 const char* DEFAULT_NTP_SERVER = "ntp.metas.ch";
 const int DEFAULT_TIME_OFFSET = 1; // MEZ
+const bool DEFAULT_AUTODST = true; // Automatische Sommer-/Winterzeit (MESZ/MEZ)
 const int DEFAULT_WEATHER_INTERVAL = 10; // Minuten
 const int DEFAULT_POLLEN_INTERVAL = 60; // Minuten
 const float DEFAULT_LONGITUDE = 0.0;
@@ -125,8 +127,13 @@ const char PROGMEM INDEX_HTML_TEMPLATE[] = R"rawliteral(
             <input type="password" id="password" name="password" value=""><br>
 
             <h2>Weitere Einstellungen</h2>
-            <label for="timeOffset">Zeitverschiebung (Stunden, z.B. 1 für MEZ, 2 für MESZ):</label>
+            <label for="timeOffset">Basis-Zeitzone (Stunden relativ zu UTC, z.B. 1 für MEZ / Schweiz / Deutschland):</label>
             <input type="tel" id="timeOffset" name="timeOffset" value="%TIMEOFFSET%"><br>
+
+            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; cursor: pointer;">
+                <input type="checkbox" id="daylightSavingAutomatic" name="daylightSavingAutomatic" value="1" %AUTODST_CHECKED% style="width: 20px; height: 20px; margin-bottom: 0;">
+                <span>Automatische Sommer-/Winterzeit (MESZ/MEZ)</span>
+            </label>
 
             <label for="ntpServer">NTP Server (z.B. ntp.metas.ch):</label>
             <input type="text" id="ntpServer" name="ntpServer" value="%NTPSERVER%"><br>
@@ -248,6 +255,19 @@ bool ConfigurationPortal::loadConfig(AppConfig& config) {
     config.wifiSsid = _preferences.getString(NVS_KEY_SSID, "");
     config.wifiPassword = _preferences.getString(NVS_KEY_PASSWORD, "");
     config.timeOffsetHours = _preferences.getInt(NVS_KEY_TIMEOFFSET, DEFAULT_TIME_OFFSET);
+    bool hasAutoDstKey = _preferences.isKey(NVS_KEY_AUTODST);
+    config.daylightSavingAutomatic = _preferences.getBool(NVS_KEY_AUTODST, DEFAULT_AUTODST);
+
+    // Automatische Migration: Falls bisher manuell Sommerzeit (2h) hinterlegt war und auto_dst noch nicht existierte,
+    // Basis-Offset auf 1h (MEZ) korrigieren und Auto-DST aktivieren.
+    if (!hasAutoDstKey && config.timeOffsetHours == 2) {
+        Logger::log(LogLevel::Info, "Automatische Migration: Basis-Zeitverschiebung von 2h auf 1h (MEZ) korrigiert und Auto-Sommerzeit aktiviert.");
+        config.timeOffsetHours = 1;
+        config.daylightSavingAutomatic = true;
+        _preferences.putInt(NVS_KEY_TIMEOFFSET, config.timeOffsetHours);
+        _preferences.putBool(NVS_KEY_AUTODST, config.daylightSavingAutomatic);
+    }
+
     config.ntpServer = _preferences.getString(NVS_KEY_NTPSERVER, DEFAULT_NTP_SERVER);
     config.googleAccessToken = _preferences.getString(NVS_KEY_GOOGLE_ACCESS_TOKEN, "");
     config.weatherUpdateIntervalMin = _preferences.getInt(NVS_KEY_WEATHER_INT, DEFAULT_WEATHER_INTERVAL);
@@ -277,6 +297,7 @@ bool ConfigurationPortal::saveConfig(const AppConfig& config) {
     _preferences.putString(NVS_KEY_SSID, config.wifiSsid);
     _preferences.putString(NVS_KEY_PASSWORD, config.wifiPassword);
     _preferences.putInt(NVS_KEY_TIMEOFFSET, config.timeOffsetHours);
+    _preferences.putBool(NVS_KEY_AUTODST, config.daylightSavingAutomatic);
     _preferences.putString(NVS_KEY_NTPSERVER, config.ntpServer);
     _preferences.putString(NVS_KEY_GOOGLE_ACCESS_TOKEN, config.googleAccessToken);
     _preferences.putInt(NVS_KEY_WEATHER_INT, config.weatherUpdateIntervalMin);
@@ -310,6 +331,7 @@ void ConfigurationPortal::handleRoot() {
 
     // Ersetze Platzhalter für weitere Einstellungen
     html.replace("%TIMEOFFSET%", String(currentConfig.timeOffsetHours));
+    html.replace("%AUTODST_CHECKED%", currentConfig.daylightSavingAutomatic ? "checked" : "");
     html.replace("%NTPSERVER%", currentConfig.ntpServer);
 
     // Google Access Token soll leer bleiben, da dieses wie ein Passwort zu behandeln ist.
@@ -389,6 +411,9 @@ void ConfigurationPortal::handleSaveConfig() {
     if (_server.hasArg("timeOffset")) {
         newConfig.timeOffsetHours = _server.arg("timeOffset").toInt();
     }
+    // Checkbox: Wenn sie im Formular angehakt ist, wird der Parameter übermittelt
+    newConfig.daylightSavingAutomatic = _server.hasArg("daylightSavingAutomatic");
+
     if (_server.hasArg("ntpServer")) {
         newConfig.ntpServer = _server.arg("ntpServer");
     }
@@ -452,7 +477,8 @@ void ConfigurationPortal::handleSaveConfig() {
     // Logge die empfangenen Daten zur Überprüfung
     Logger::log(LogLevel::Info, "Empfangene Konfigurationsdaten:");
     Logger::log(LogLevel::Info, "  SSID: " + newConfig.wifiSsid);
-    Logger::log(LogLevel::Info, "  Zeitverschiebung: " + String(newConfig.timeOffsetHours));
+    Logger::log(LogLevel::Info, "  Basis-Zeitverschiebung: " + String(newConfig.timeOffsetHours) + "h");
+    Logger::log(LogLevel::Info, "  Auto-Sommerzeit: " + String(newConfig.daylightSavingAutomatic ? "Aktiv" : "Inaktiv"));
     Logger::log(LogLevel::Info, "  NTP Server: " + newConfig.ntpServer);
     Logger::log(LogLevel::Info, "  Google Access Token Länge: " + String(newConfig.googleAccessToken.length()));
     Logger::log(LogLevel::Info, "  Wetter-Intervall: " + String(newConfig.weatherUpdateIntervalMin) + " min");

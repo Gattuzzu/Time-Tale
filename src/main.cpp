@@ -323,8 +323,11 @@ void initializeNetworkServices() {
 void applyDeviceSettings() {
     Logger::log(LogLevel::Info, "Wende Geräteeinstellungen an...");
 
-    Logger::log(LogLevel::Info, "NTP-Server gesetzt auf: " + currentDeviceConfig.ntpServer + " mit Zeitverschiebung: " + String(currentDeviceConfig.timeOffsetHours) + "h");
-    NTPTimeSync::getInstance(currentDeviceConfig.ntpServer.c_str(), (currentDeviceConfig.timeOffsetHours * 60 * 60), UPDATE_INTERVALL);
+    Logger::log(LogLevel::Info, "NTP-Server gesetzt auf: " + currentDeviceConfig.ntpServer + " mit Basis-Zeitverschiebung: " + String(currentDeviceConfig.timeOffsetHours) + "h (Auto-Sommerzeit: " + String(currentDeviceConfig.daylightSavingAutomatic ? "aktiv" : "inaktiv") + ")");
+    NTPTimeSync::getInstance(currentDeviceConfig.ntpServer.c_str(), (currentDeviceConfig.timeOffsetHours * 60 * 60), UPDATE_INTERVALL, currentDeviceConfig.daylightSavingAutomatic);
+
+    WeatherClient::getInstance(WEATHER_API_SERVER, currentDeviceConfig.googleAccessToken.c_str());
+    PollenClient::getInstance(POLLEN_API_SERVER, currentDeviceConfig.googleAccessToken.c_str());
 
     // FastLED Textfarbe setzen
     CRGB displayColor = CRGB(currentDeviceConfig.textColorCRGB);

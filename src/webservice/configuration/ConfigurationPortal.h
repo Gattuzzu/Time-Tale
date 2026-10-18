@@ -19,7 +19,8 @@ class Logger;
 struct AppConfig {
     String wifiSsid;                  // WLAN SSID
     String wifiPassword;              // WLAN Passwort
-    int timeOffsetHours;              // Zeitverschiebung in Stunden (z.B. 1 für MEZ, 2 für MESZ)
+    int timeOffsetHours;              // Basis-Zeitverschiebung in Stunden (z.B. 1 für MEZ)
+    bool daylightSavingAutomatic;     // Automatische Sommer-/Winterzeit-Umschaltung (MESZ/MEZ)
     String ntpServer;                 // NTP Server Adresse als String
     String googleAccessToken;         // Access Token für API von Google API's
     int weatherUpdateIntervalMin;     // Update Intervall für das Wetter-API in Minuten
