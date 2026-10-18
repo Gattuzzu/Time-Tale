@@ -9,6 +9,9 @@
 // NTP Konfiguration
 #define UPDATE_INTERVALL 60000 // 1 Minute
 
+// WLAN Reconnect Konfiguration
+#define WIFI_RECONNECT_INTERVAL 300000UL // 5 Minuten (5 * 60 * 1000 ms)
+
 // Logger Konfiguration
 #define LOG_LEVEL LogLevel::Info
 

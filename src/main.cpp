@@ -686,6 +686,9 @@ void loop() {
   }
 
 
+  // Zeitstempel für periodische WLAN-Wiederverbindungsversuche im AP-Modus
+  static unsigned long lastWifiReconnectAttempt = 0;
+
   switch (currentState) {
     case STATE_INITIALIZING:
       Logger::log(LogLevel::Info, "STATE_INITIALIZING: Versuche, WLAN-Konfiguration zu laden.");
@@ -694,16 +697,29 @@ void loop() {
       // Der Übergang zu STATE_CONNECTING_WIFI oder STATE_AP_MODE wurde bereits in setup() gehandhabt.
       break;
 
-    case STATE_AP_MODE:
-      // Der Webserver läuft und wartet auf Eingaben.
-      // handleClient() wird bereits am Anfang der loop() aufgerufen.
-      // Der Übergang zu STATE_CONNECTING_WIFI erfolgt über den onConfigSavedCallback.
+    case STATE_AP_MODE: {
+      // Wenn gespeicherte Zugangsdaten vorhanden sind und niemand mit dem SoftAP verbunden ist,
+      // alle 5 Minuten (WIFI_RECONNECT_INTERVAL) einen erneuten Verbindungsversuch unternehmen.
+      if (currentDeviceConfig.wifiSsid.length() > 0 && WiFi.softAPgetStationNum() == 0) {
+        if (lastWifiReconnectAttempt == 0) {
+          lastWifiReconnectAttempt = millis();
+        } else if (millis() - lastWifiReconnectAttempt >= WIFI_RECONNECT_INTERVAL) {
+          lastWifiReconnectAttempt = millis();
+          Logger::log(LogLevel::Info, "Kein Client am AP verbunden. Periodischer Wiederverbindungsversuch mit WLAN: " + currentDeviceConfig.wifiSsid);
+          currentState = STATE_CONNECTING_WIFI;
+        }
+      } else {
+        // Falls ein Client verbunden ist oder keine SSID da ist, Timer zurücksetzen
+        lastWifiReconnectAttempt = millis();
+      }
       break;
+    }
 
     case STATE_CONNECTING_WIFI:
       Logger::log(LogLevel::Info, "STATE_CONNECTING_WIFI: Versuche zu verbinden.");
       if (connectToWiFi()) { // Nutzt currentDeviceConfig
           currentState = STATE_NORMAL_OPERATION;
+          lastWifiReconnectAttempt = 0; // Timer zurücksetzen bei erfolgreicher Verbindung
           // Da wir jetzt eine stabile WLAN-Verbindung haben, initialisiere die Dienste
           if (!servicesInitializedInNormalOp) {
               initializeNetworkServices();
@@ -715,9 +731,10 @@ void loop() {
           // Starte den Webserver im Station-Modus, um weitere Einstellungen zu ermöglichen.
           ConfigurationPortal::getInstance().startWebServerInStationMode();
       } else {
-          Logger::log(LogLevel::Error, "Verbindung fehlgeschlagen. Zurück zum AP-Modus.");
+          Logger::log(LogLevel::Error, "Verbindung fehlgeschlagen. Starte/Bleibe im AP-Modus.");
           currentState = STATE_AP_MODE;
-          // AP neu starten, wenn Verbindung fehlschlägt
+          lastWifiReconnectAttempt = millis(); // Nächster Versuch in 5 Minuten
+          // AP starten/reinitialisieren, damit Konfiguration weiterhin möglich ist
           ConfigurationPortal::getInstance().startAPAndWebServer(AP_SSID, AP_PASSWORD);
       }
       break;
@@ -755,6 +772,7 @@ void loop() {
       if (connectToWiFi()) { // Nutzt currentDeviceConfig
           Logger::log(LogLevel::Info, "Erneute WLAN-Verbindung erfolgreich hergestellt.");
           currentState = STATE_NORMAL_OPERATION;
+          lastWifiReconnectAttempt = 0;
           // Dienste müssen hier nicht neu initialisiert werden, da die Instanzen erhalten bleiben.
           // NTPClient.begin() wird bei jedem NTPTimeSync.begin() aufgerufen.
           // APIs sind bereits initialisiert.
@@ -766,6 +784,7 @@ void loop() {
       } else {
           Logger::log(LogLevel::Error, "Erneute WLAN-Verbindung fehlgeschlagen. Starte Konfigurations-AP.");
           currentState = STATE_AP_MODE;
+          lastWifiReconnectAttempt = millis(); // 5 Minuten Timer ab jetzt
           // AP neu starten
           ConfigurationPortal::getInstance().startAPAndWebServer(AP_SSID, AP_PASSWORD);
       }
